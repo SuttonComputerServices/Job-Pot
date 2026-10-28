@@ -1,0 +1,11 @@
+{% extends "_narrow.html" %}
+{% block title %}Two-step check{% endblock %}
+{% block content %}
+<h1>Enter your code</h1>
+<p>Open your authenticator app and type the 6-digit code for Job Pot.</p>
+<form method="post" action="/login/2fa" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Code <input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" required autofocus></label>
+  <div class="actions"><button>Verify</button> <a href="/login">Start over</a></div>
+</form>
+{% endblock %}

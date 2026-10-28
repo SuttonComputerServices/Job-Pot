@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 
 from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text, UniqueConstraint, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
 
@@ -111,6 +111,7 @@ class Application(Base):
     submitted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     error: Mapped[str] = mapped_column(Text, default="")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
+    responses: Mapped[list["Response"]] = relationship(order_by="Response.received_at", viewonly=True)
     __table_args__ = (UniqueConstraint("user_id", "site", "external_id"),)
 
 
@@ -126,6 +127,7 @@ class Response(Base):
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=now)
     category: Mapped[str] = mapped_column(String(20), default="other")
     suggestions: Mapped[list] = mapped_column(JSON, default=list)
+    replies: Mapped[list["Reply"]] = relationship(order_by="Reply.sent_at", viewonly=True)
 
 
 class Reply(Base):

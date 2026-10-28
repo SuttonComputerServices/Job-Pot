@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Administration{% endblock %}
+{% block content %}
+<h1>Administration</h1>
+
+<h2>Accounts</h2>
+<p class="muted">Each account's applications, resume, mailbox and site logins are separate. Deleting an account deletes all of its data.</p>
+<table>
+  <thead><tr><th>Username</th><th>Name</th><th>Two-step</th><th>Created</th><th></th></tr></thead>
+  <tbody>
+  {% for u in users %}
+  <tr>
+    <td><strong>{{ u.username }}</strong>{% if u.is_admin %} <span class="pill">admin</span>{% endif %}{% if u.must_change_password %} <span class="pill">temporary password</span>{% endif %}</td>
+    <td>{{ u.full_name or "—" }}</td>
+    <td>{{ "On" if u.totp_enabled else "Off" }}</td>
+    <td>{{ u.created_at.strftime("%-d %b %Y") }}</td>
+    <td>
+      {% if u.id != user.id %}
+      <details>
+        <summary class="small">Manage</summary>
+        <form method="post" action="/admin/users/{{ u.id }}/reset" class="stack">
+          <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+          <label>Temporary password <input type="password" name="password" minlength="12" required autocomplete="new-password"></label>
+          <button class="quiet">Reset password and two-step</button>
+        </form>
+        <form method="post" action="/admin/users/{{ u.id }}/delete" class="gap-top">
+          <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+          <button class="warn">Delete {{ u.username }}</button>
+        </form>
+      </details>
+      {% endif %}
+    </td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h3 class="gap-top">Add an account</h3>
+<form method="post" action="/admin/users" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <div class="row">
+    <label>Username <input name="username" required minlength="3" maxlength="64" pattern="[A-Za-z0-9._\-]+" autocomplete="off"></label>
+    <label>Temporary password <span class="hint">They change it at first sign-in.</span><input type="password" name="password" minlength="12" required autocomplete="new-password"></label>
+  </div>
+  <div class="actions"><button>Create account</button></div>
+</form>
+
+<h2 id="ai">Local AI (Ollama)</h2>
+<p>When on, Job Pot uses your own Ollama model to explain fit scores, review resumes, sort employer emails and draft replies. Nothing leaves this server. When off or unreachable, it falls back to built-in rules.</p>
+<form method="post" action="/admin/ai" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label class="check"><input type="checkbox" name="enabled" value="1" {% if ai_enabled %}checked{% endif %}> Use the local AI model</label>
+  <div class="row">
+    <label>Ollama address <span class="hint">With Docker Compose: http://ollama:11434</span><input type="url" name="ollama_url" value="{{ ollama_url }}" placeholder="http://localhost:11434"></label>
+    <label>Model <input name="ollama_model" value="{{ ollama_model }}" list="models"></label>
+  </div>
+  {% if models is not none %}
+  <datalist id="models">{% for m in models %}<option value="{{ m }}">{% endfor %}</datalist>
+  <p class="small">Models on that server: {{ models | join(", ") if models else "none yet. Pull one with: docker compose exec ollama ollama pull llama3.1:8b" }}</p>
+  {% endif %}
+  <div class="actions"><button name="action" value="save">Save AI settings</button><button class="quiet" name="action" value="test">Test connection</button></div>
+</form>
+{% endblock %}

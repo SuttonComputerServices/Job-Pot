@@ -1,0 +1,7 @@
+{% extends "_narrow.html" %}
+{% block title %}{{ code }}{% endblock %}
+{% block content %}
+<h1>{{ "Not found" if code == 404 else "Can't do that" }}</h1>
+<p>{{ message }}</p>
+<p><a href="/">Back to applications</a></p>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en"{% if user and user.theme in ("light", "dark") %} data-theme="{{ user.theme }}"{% endif %}>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Job Pot{% endblock %} · Job Pot</title>
+<link rel="icon" href="/static/pot.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">{% include "_pot.svg" %}Job Pot</a>
+  <span class="spacer"></span>
+  {% if user %}
+  <details class="menu">
+    <summary aria-label="Account menu for {{ user.username }}">{{ (user.full_name or user.username)[:1] | upper }}</summary>
+    <div class="panel">
+      <div class="who"><strong>{{ user.full_name or user.username }}</strong><br><span class="muted small">Signed in as {{ user.username }}</span></div>
+      <a href="/profile">Profile</a>
+      <a href="/settings">Settings</a>
+      {% if user.is_admin %}<a href="/admin">Administration</a>{% endif %}
+      <hr>
+      <a href="/faq">FAQ</a>
+      <a href="/about">About</a>
+      <a href="/terms">Terms of use</a>
+      <hr>
+      <form method="post" action="/settings/theme" class="theme-pick" aria-label="Colour theme">
+        <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+        <input type="hidden" name="back" value="{{ request.url.path }}">
+        {% for t in ("system", "light", "dark") %}<button name="theme" value="{{ t }}" class="{{ '' if user.theme == t else 'quiet' }}" aria-pressed="{{ 'true' if user.theme == t else 'false' }}">{{ t | capitalize }}</button>{% endfor %}
+      </form>
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+        <button class="link">Sign out</button>
+      </form>
+    </div>
+  </details>
+  {% endif %}
+</header>
+{% if user and not bare %}
+{% set p = request.url.path %}
+<nav class="tabs" aria-label="Main">
+  <a href="/" {% if p == "/" or p.startswith("/applications") %}aria-current="page"{% endif %}>Applications</a>
+  <a href="/sites" {% if p.startswith("/sites") %}aria-current="page"{% endif %}>Job sites</a>
+  <a href="/mailbox" {% if p.startswith("/mailbox") %}aria-current="page"{% endif %}>Mailbox</a>
+  <a href="/resume" {% if p.startswith("/resume") %}aria-current="page"{% endif %}>Resume</a>
+</nav>
+{% endif %}
+<main class="{% block sheetclass %}sheet{% endblock %}" id="main">
+  {% for kind, msg in flashes %}<p class="note {{ kind }}" role="status">{{ msg }}</p>{% endfor %}
+  {% if error %}<p class="note problem" role="alert"><strong>{{ error }}</strong></p>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+<footer><a href="/faq">FAQ</a> &nbsp; <a href="/about">About</a> &nbsp; <a href="/terms">Terms of use</a></footer>
+</body>
+</html>

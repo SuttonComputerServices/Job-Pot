@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+{% block content %}
+<h1>Profile</h1>
+<p class="muted">These details go into your applications. Keep them the same as on your resume.</p>
+<form method="post" action="/profile" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Full name <input name="full_name" value="{{ user.full_name }}" autocomplete="name"></label>
+  <div class="row">
+    <label>Email for applications <input type="email" name="email" value="{{ user.email }}" autocomplete="email"></label>
+    <label>Phone <input type="tel" name="phone" value="{{ user.phone }}" autocomplete="tel"></label>
+  </div>
+  <label>City and region <input name="location" value="{{ user.location }}" autocomplete="address-level2"></label>
+  <label>Links <span class="hint">LinkedIn, portfolio, GitHub. One per line.</span><textarea name="links">{{ user.links }}</textarea></label>
+  <div class="actions"><button>Save profile</button></div>
+</form>
+
+<h2>Sign-in username</h2>
+<p>You sign in as <strong>{{ user.username }}</strong>.</p>
+<form method="post" action="/profile/username" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>New username <input name="new_username" required minlength="3" maxlength="64" pattern="[A-Za-z0-9._\-]+" autocomplete="username"></label>
+  <label>Current password <input type="password" name="password" required autocomplete="current-password"></label>
+  <div class="actions"><button>Change username</button></div>
+</form>
+{% endblock %}

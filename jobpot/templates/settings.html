@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h1>Settings</h1>
+{% if welcome %}<p class="note">You're signed in as the administrator. Next: turn on two-step sign-in below, then add accounts on the Administration page.</p>{% endif %}
+{% if user.must_change_password %}<p class="note problem"><strong>Choose your own password to continue.</strong></p>{% endif %}
+
+<h2>Automation</h2>
+<p>When automation is on, Job Pot searches your connected sites, applies where you've allowed it, and checks your mailbox every few minutes, day and night.</p>
+<form method="post" action="/settings/automation" class="actions">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  {% if user.automation_enabled %}
+  <span><strong>On.</strong></span><button class="warn" name="enabled" value="0">Turn automation off</button>
+  {% else %}
+  <span><strong>Off.</strong></span><button name="enabled" value="1">Turn automation on</button>
+  {% endif %}
+</form>
+
+<h2>Appearance</h2>
+<form method="post" action="/settings/theme" class="actions">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  {% for t, label in (("system", "Match my device"), ("light", "Light"), ("dark", "Dark")) %}
+  <button name="theme" value="{{ t }}" class="{{ '' if user.theme == t else 'quiet' }}" aria-pressed="{{ 'true' if user.theme == t else 'false' }}">{{ label }}</button>
+  {% endfor %}
+</form>
+
+<h2 id="twofa">Two-step sign-in</h2>
+{% if user.totp_enabled %}
+<p><strong>On.</strong> You need a code from your authenticator app each time you sign in.</p>
+<form method="post" action="/settings/2fa/disable" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <div class="row">
+    <label>Password <input type="password" name="password" required autocomplete="current-password"></label>
+    <label>Current code <input name="code" inputmode="numeric" autocomplete="one-time-code" required></label>
+  </div>
+  <div class="actions"><button class="warn">Turn off two-step sign-in</button></div>
+</form>
+{% elif qr %}
+<p>Scan this with an authenticator app such as Aegis, 2FAS, Google Authenticator or 1Password, then enter the 6-digit code it shows.</p>
+<div class="qr">{{ qr }}</div>
+<p class="small">Can't scan? Enter this key by hand: <code>{{ secret }}</code></p>
+<form method="post" action="/settings/2fa/confirm" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Code from the app <input name="code" inputmode="numeric" autocomplete="one-time-code" required></label>
+  <div class="actions"><button>Turn on two-step sign-in</button></div>
+</form>
+{% else %}
+<p>Add a second step to signing in, using a code from an app on your phone.</p>
+<form method="post" action="/settings/2fa/start"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button>Set up two-step sign-in</button></form>
+{% endif %}
+
+<h2>Password</h2>
+<form method="post" action="/settings/password" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Current password <input type="password" name="current" required autocomplete="current-password"></label>
+  <div class="row">
+    <label>New password <span class="hint">At least 12 characters.</span><input type="password" name="password" minlength="12" required autocomplete="new-password"></label>
+    <label>Repeat new password <input type="password" name="confirm" minlength="12" required autocomplete="new-password"></label>
+  </div>
+  <div class="actions"><button>Change password</button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "_narrow.html" %}
+{% block title %}Set up{% endblock %}
+{% block content %}
+<h1>Set the admin password</h1>
+<p>This install has no admin password yet. To prove you run the server, paste the one-time setup token. It's printed in the server log at startup and saved in <code>{{ token_path }}</code>.</p>
+<p class="muted small">With Docker: <code>docker compose logs web | grep "Setup token"</code></p>
+<form method="post" action="/setup" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Setup token <input name="token" required autocomplete="off" spellcheck="false"></label>
+  <label>New password <span class="hint">At least 12 characters.</span><input type="password" name="password" minlength="12" required autocomplete="new-password"></label>
+  <label>Repeat password <input type="password" name="confirm" minlength="12" required autocomplete="new-password"></label>
+  <div class="actions"><button>Save password and sign in</button></div>
+</form>
+{% endblock %}
