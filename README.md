@@ -1,1 +1,2 @@
-# AI-tool-to-submit-applications-24-7
+# Job Pot
+#uses AI to auto submit applications and report back
