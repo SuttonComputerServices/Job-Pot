@@ -52,6 +52,9 @@ def mailbox_save(request: Request, address: str = Form(""), imap_host: str = For
     on, ip, sp = enabled == "1", _port(imap_port), _port(smtp_port)
     address, imap_host, smtp_host = address.strip()[:200], imap_host.strip().lower()[:200], smtp_host.strip().lower()[:200]
     password = password.strip("\r\n")
+    # A saved password only ever goes to the servers it was entered for; changing them means typing it again.
+    moved = (address, imap_host, ip, smtp_host, sp, login.strip()) != (mb.address, mb.imap_host, mb.imap_port, mb.smtp_host, mb.smtp_port, mb.login)
+    kept = None if moved else mb.password_enc
     problem = None
     if ip is None or sp is None:
         problem = "Ports must be whole numbers from 1 to 65535. The usual ones are 993 for IMAP and 587 or 465 for SMTP."
@@ -61,8 +64,9 @@ def mailbox_save(request: Request, address: str = Form(""), imap_host: str = For
         problem = "Enter both the IMAP and SMTP server names, or untick the mailbox to save without them."
     elif on and "@" not in address:
         problem = "Enter the mailbox's full email address, like jobs@example.com."
-    elif on and not (password or mb.password_enc):
-        problem = "Enter the mailbox password. Gmail and Outlook need an app password here."
+    elif on and not (password or kept):
+        problem = ("You changed the address, server or login, so enter the mailbox password again." if mb.password_enc
+                   else "Enter the mailbox password. Gmail and Outlook need an app password here.")
     if problem:
         if mb in db:
             db.expunge(mb)  # show what they typed without saving any of it
@@ -71,8 +75,7 @@ def mailbox_save(request: Request, address: str = Form(""), imap_host: str = For
         return _page(request, db, user, mb, error=problem, status=400)
     mb.address, mb.imap_host, mb.imap_port, mb.smtp_host, mb.smtp_port = address, imap_host, ip, smtp_host, sp
     mb.smtp_starttls, mb.login, mb.enabled = smtp_starttls == "1", login.strip()[:200], on
-    if password:
-        mb.password_enc = crypto.encrypt(user.id, password)
+    mb.password_enc = crypto.encrypt(user.id, password) if password else kept
     db.add(mb)
     db.commit()
     flash(request, "Mailbox saved." + (" Job Pot will check it for replies." if on else " It won't be checked until you turn it on."))

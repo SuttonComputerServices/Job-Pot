@@ -1,3 +1,4 @@
+import hmac
 import time
 
 import pyotp
@@ -15,11 +16,21 @@ PENDING_2FA_SECONDS = 300
 
 
 def totp_ok(user: User, code: str) -> bool:
+    """Accepts the current code or one step either side, never a step already used (blocks replay). Caller commits."""
     if not user.totp_secret_enc:
         return False
-    secret = crypto.decrypt(user.id, user.totp_secret_enc)
-    # shortcut: a code can be reused inside its 30 s window; store the last used step to block replay if needed.
-    return pyotp.TOTP(secret).verify(code.replace(" ", ""), valid_window=1)
+    totp, code = pyotp.TOTP(crypto.decrypt(user.id, user.totp_secret_enc)), code.replace(" ", "")
+    now_step = int(time.time()) // totp.interval
+    for step in (now_step - 1, now_step, now_step + 1):
+        if step > (user.totp_last_step or 0) and hmac.compare_digest(totp.at(step * totp.interval), code):
+            user.totp_last_step = step
+            return True
+    return False
+
+
+def client_key(request: Request, name: str) -> str:
+    # Per client, so a stranger's wrong guesses can't lock the real owner out.
+    return f"{name}|{request.client.host if request.client else '?'}"
 
 
 def _admin_pending(db) -> bool:
@@ -35,14 +46,13 @@ def login_form(request: Request, user=Depends(optional_user)):
 
 @router.post("/login")
 def login(request: Request, username: str = Form(...), password: str = Form(""), db=Depends(get_db)):
-    key = username.strip().lower()
-    if login_throttle.locked(key):
-        return render(request, "login.html", error="Too many failed attempts. Wait five minutes and try again.", status=429)
     user = find_user(db, username)
     if user and user.is_admin and user.password_hash is None:
         return redirect("/setup")
+    key = client_key(request, username.strip().lower())
+    if not login_throttle.hit(key):
+        return render(request, "login.html", error="Too many failed attempts. Wait five minutes and try again.", status=429)
     if not verify_password(user.password_hash if user else _DUMMY_HASH, password) or not user:
-        login_throttle.fail(key)
         return render(request, "login.html", error="That username and password don't match.", username=username, status=401)
     login_throttle.ok(key)
     if user.totp_enabled:
@@ -68,12 +78,12 @@ def twofa(request: Request, code: str = Form(...), db=Depends(get_db)):
         return redirect("/login")
     key = f"2fa:{uid}"
     user = db.get(User, uid)
-    if login_throttle.locked(key) or not user:
+    if not user or not login_throttle.hit(key):
         request.session.clear()
         return render(request, "login.html", error="Too many wrong codes. Wait five minutes and sign in again.", status=429)
     if not totp_ok(user, code):
-        login_throttle.fail(key)
         return render(request, "login_2fa.html", error="That code didn't work. Codes change every 30 seconds.", status=401)
+    db.commit()  # stores the used step
     login_throttle.ok(key)
     login_session(request, user)
     return redirect("/")
@@ -91,10 +101,9 @@ def setup(request: Request, token: str = Form(...), password: str = Form(...), c
     if not _admin_pending(db):
         return redirect("/login")
     ctx = {"token_path": str(SETUP_TOKEN)}
-    if login_throttle.locked("setup"):
+    if not login_throttle.hit(client_key(request, "setup")):
         return render(request, "setup.html", error="Too many wrong setup tokens. Wait five minutes.", status=429, **ctx)
     if not setup_token_ok(token):
-        login_throttle.fail("setup")
         return render(request, "setup.html", error="That setup token is wrong. Copy it from the server log or the token file.", status=401, **ctx)
     if problem := password_problem(password, confirm):
         return render(request, "setup.html", error=problem, status=400, **ctx)

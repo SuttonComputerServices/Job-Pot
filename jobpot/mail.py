@@ -1,6 +1,8 @@
 """Dedicated mailbox: read employer replies over IMAP, answer them over SMTP. Stdlib only."""
 import email
 import imaplib
+import ipaddress
+import socket
 import re
 import smtplib
 import ssl
@@ -12,7 +14,7 @@ from html.parser import HTMLParser
 
 from sqlalchemy import select
 
-from . import ai, crypto
+from . import ai, config, crypto
 from .models import Application, Mailbox, Reply, Response, now
 
 MAX_BODY = 20000
@@ -33,7 +35,22 @@ SUFFIX = re.compile(r"[\s,]+(inc|llc|ltd|limited|corp|corporation|co|gmbh|plc|co
 
 # ---------- connections (tests monkeypatch these two) ----------
 
+def check_host(host: str, port: int):
+    """Users choose these hosts, so refuse internal addresses unless the admin allowed them."""
+    if config.ALLOW_PRIVATE_MAIL_HOSTS:
+        return
+    try:
+        infos = socket.getaddrinfo(host, port, proto=socket.IPPROTO_TCP)
+    except socket.gaierror:
+        raise OSError(f"can't find the server {host}") from None
+    for info in infos:
+        ip = ipaddress.ip_address(info[4][0].split("%")[0])
+        if not ip.is_global:
+            raise OSError(f"{host} is a private or local address. The server admin can allow these with JOBPOT_ALLOW_PRIVATE_MAIL_HOSTS=1")
+
+
 def _connect(mb: Mailbox, password: str):
+    check_host(mb.imap_host, mb.imap_port)
     ctx = ssl.create_default_context()
     if mb.imap_port == 143:
         conn = imaplib.IMAP4(mb.imap_host, 143, timeout=30)
@@ -45,6 +62,7 @@ def _connect(mb: Mailbox, password: str):
 
 
 def _smtp(mb: Mailbox, password: str):
+    check_host(mb.smtp_host, mb.smtp_port)
     ctx = ssl.create_default_context()
     if mb.smtp_starttls:
         s = smtplib.SMTP(mb.smtp_host, mb.smtp_port, timeout=30)

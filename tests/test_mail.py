@@ -177,3 +177,34 @@ def test_routes_save_encrypted_never_render_password_and_isolate_users(monkeypat
         login(c, "bob")
         for action in ("reply", "suggest", "delete"):
             assert c.post(f"/responses/{rid}/{action}", data={"body": "x", "csrf": csrf(c, "/mailbox")}).status_code == 404
+
+
+def test_check_host_refuses_internal_addresses(monkeypatch):
+    import pytest
+    from jobpot import config, mail
+    for host in ("127.0.0.1", "10.0.0.5", "169.254.169.254", "localhost"):
+        with pytest.raises(OSError, match="private or local"):
+            mail.check_host(host, 993)
+    monkeypatch.setattr(config, "ALLOW_PRIVATE_MAIL_HOSTS", True)
+    mail.check_host("127.0.0.1", 993)
+
+
+def test_saved_password_dropped_when_server_changes():
+    from jobpot import crypto
+    from jobpot.db import SessionLocal
+    from jobpot.models import Mailbox
+    from .helpers import client, csrf, login, make_user
+    uid = make_user()
+    base = {"address": "jobs@example.com", "imap_host": "imap.example.com", "imap_port": "993", "smtp_host": "smtp.example.com",
+            "smtp_port": "587", "smtp_starttls": "1", "login": "jobs@example.com", "enabled": "1"}
+    with client() as c:
+        login(c)
+        c.post("/mailbox", data={**base, "password": "app-pass-1", "csrf": csrf(c, "/mailbox")})
+        c.post("/mailbox", data={**base, "csrf": csrf(c, "/mailbox")})  # unchanged: keeps the password
+        with SessionLocal() as db:
+            assert crypto.decrypt(uid, db.query(Mailbox).one().password_enc) == "app-pass-1"
+        r = c.post("/mailbox", data={**base, "imap_host": "imap.attacker.example", "csrf": csrf(c, "/mailbox")})
+        assert r.status_code == 400 and "enter the mailbox password again" in r.text
+        c.post("/mailbox", data={**base, "imap_host": "imap.attacker.example", "enabled": "", "csrf": csrf(c, "/mailbox")})
+        with SessionLocal() as db:
+            assert db.query(Mailbox).one().password_enc is None

@@ -1,3 +1,5 @@
+import time
+
 import pyotp
 
 from jobpot import crypto
@@ -64,7 +66,10 @@ def test_totp_enrol_and_login():
         r = login(c)
         assert r.headers["location"] == "/login/2fa"
         assert c.get("/settings", follow_redirects=False).status_code == 303  # not signed in yet
-        r = c.post("/login/2fa", data={"code": pyotp.TOTP(secret).now(), "csrf": csrf(c, "/login/2fa")}, follow_redirects=False)
+        used = pyotp.TOTP(secret).now()  # already used to enrol: a replay must fail
+        assert c.post("/login/2fa", data={"code": used, "csrf": csrf(c, "/login/2fa")}).status_code == 401
+        nxt = pyotp.TOTP(secret).at(time.time() + 30)
+        r = c.post("/login/2fa", data={"code": nxt, "csrf": csrf(c, "/login/2fa")}, follow_redirects=False)
         assert r.headers["location"] == "/"
         assert c.get("/settings").status_code == 200
 
@@ -121,3 +126,14 @@ def test_security_headers():
         r = c.get("/login")
         assert "default-src 'self'" in r.headers["content-security-policy"]
         assert r.headers["x-frame-options"] == "DENY"
+
+
+def test_strangers_failures_dont_lock_out_the_owner():
+    from fastapi.testclient import TestClient
+    from jobpot.web.app import app
+    make_user()
+    with TestClient(app, client=("203.0.113.9", 5000)) as attacker, TestClient(app, client=("198.51.100.7", 5000)) as owner:
+        for _ in range(6):
+            attacker.post("/login", data={"username": "alice", "password": "bad", "csrf": csrf(attacker)})
+        assert attacker.post("/login", data={"username": "alice", "password": PASSWORD, "csrf": csrf(attacker)}).status_code == 429
+        login(owner)

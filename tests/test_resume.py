@@ -177,3 +177,11 @@ def test_ai_review_shown_when_ai_on(monkeypatch):
         assert "Get an AI review" in c.get("/resume").text
         r = c.post("/resume/ai", data={"csrf": csrf(c, "/resume")})
         assert "1. Add numbers &lt;b&gt;" in r.text and "jane@example.com" in prompts[0]
+
+
+def test_review_is_fast_on_huge_text():
+    import time
+    from jobpot.resume import review
+    start = time.monotonic()
+    review("a" * 5_000_000, None)
+    assert time.monotonic() - start < 2

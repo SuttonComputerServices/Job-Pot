@@ -38,9 +38,14 @@ def test_password_hash():
 
 def test_throttle_locks_after_limit():
     t = Throttle(limit=3, window=60)
-    for _ in range(3):
-        assert not t.locked("bob")
-        t.fail("bob")
-    assert t.locked("bob")
+    assert all(t.hit("bob") for _ in range(3))
+    assert not t.hit("bob") and t.hit("carol")
     t.ok("bob")
-    assert not t.locked("bob")
+    assert t.hit("bob")
+
+
+def test_throttle_is_atomic_under_threads():
+    from concurrent.futures import ThreadPoolExecutor
+    t = Throttle(limit=5, window=60)
+    with ThreadPoolExecutor(16) as pool:
+        assert sum(pool.map(lambda _: t.hit("x"), range(200))) == 5

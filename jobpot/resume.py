@@ -27,7 +27,8 @@ SECTIONS = {
     "Skills": r"skills|competencies|expertise",
 }
 BULLET = re.compile(r"^\s*([-*•▪‣◦·●]|\d+[.)])\s+")
-EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+EMAIL = re.compile(r"[\w.+-]{1,64}@[\w-]{1,63}(?:\.[\w-]{1,63})+")  # bounded: linear on huge inputs
+MAX_TEXT = 100_000  # characters; a real resume is a few thousand
 PHONE = re.compile(r"\+?\(?\d[\d ().-]{7,}\d")
 LINK = re.compile(r"linkedin\.com|github\.com|https?://|www\.", re.I)
 NUMBER = re.compile(r"\d|%|\$")
@@ -100,6 +101,7 @@ def _has(term: str, text: str) -> bool:
 
 
 def review(text: str, criteria) -> list[Suggestion]:
+    text = text[:MAX_TEXT]
     """Rule checks, each giving one suggestion. criteria is a models.Criteria or None."""
     text = text.strip()
     if not text:

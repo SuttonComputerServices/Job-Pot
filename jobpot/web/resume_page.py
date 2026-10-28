@@ -8,7 +8,7 @@ from sqlalchemy import select
 from .. import ai
 from ..db import get_db
 from ..models import Criteria, Resume
-from ..resume import MIME, ai_review, extract_text, review
+from ..resume import MAX_TEXT, MIME, ai_review, extract_text, review
 from .deps import current_user, flash, redirect, render
 
 router = APIRouter()
@@ -59,7 +59,7 @@ def resume_upload(request: Request, file: UploadFile = File(...), user=Depends(c
     res.filename, res.data = Path(file.filename).name[:255], data
     res.mime = MIME[Path(file.filename).suffix.lower()]  # from the extension we parsed, not the browser's claim
     if text:
-        res.text = text
+        res.text = text[:MAX_TEXT]
         flash(request, f"Uploaded {res.filename}. Review the text below and fix anything that came out wrong.")
     else:
         # Keep any earlier text rather than wiping it with nothing.
@@ -72,7 +72,7 @@ def resume_upload(request: Request, file: UploadFile = File(...), user=Depends(c
 @router.post("/resume/text")
 def resume_text(request: Request, text: str = Form(""), user=Depends(current_user), db=Depends(get_db)):
     res = _resume(db, user) or Resume(user_id=user.id)
-    res.text = text.replace("\r\n", "\n").replace("\x00", "").strip()
+    res.text = text.replace("\r\n", "\n").replace("\x00", "").strip()[:MAX_TEXT]
     db.add(res)
     db.commit()
     flash(request, "Resume text saved. Job Pot uses this text to score jobs.")

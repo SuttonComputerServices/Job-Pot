@@ -1,6 +1,7 @@
 import hmac
 import os
 import secrets
+import threading
 import time
 
 from argon2 import PasswordHasher
@@ -72,25 +73,26 @@ def setup_token_ok(token: str) -> bool:
 
 
 class Throttle:
-    """Login lockout. shortcut: in-memory per process, resets on restart; move to the DB if running several web workers."""
+    """Counts attempts before they are checked, under a lock, so parallel guesses can't slip past the limit.
+    shortcut: in-memory per process, resets on restart; move to the DB if running several web workers."""
 
     def __init__(self, limit: int = 5, window: int = 300):
-        self.limit, self.window, self.fails = limit, window, {}
+        self.limit, self.window, self.fails, self._lock = limit, window, {}, threading.Lock()
 
-    def locked(self, key: str) -> bool:
-        count, since = self.fails.get(key, (0, 0.0))
-        if count >= self.limit and time.monotonic() - since < self.window:
+    def hit(self, key: str) -> bool:
+        """Record an attempt. False means locked: reject without checking the password."""
+        with self._lock:
+            count, since = self.fails.get(key, (0, time.monotonic()))
+            if time.monotonic() - since >= self.window:
+                count, since = 0, time.monotonic()
+            if count >= self.limit:
+                return False
+            self.fails[key] = (count + 1, since)
             return True
-        if count >= self.limit:
-            self.fails.pop(key, None)
-        return False
-
-    def fail(self, key: str):
-        count, since = self.fails.get(key, (0, time.monotonic()))
-        self.fails[key] = (count + 1, since if count else time.monotonic())
 
     def ok(self, key: str):
-        self.fails.pop(key, None)
+        with self._lock:
+            self.fails.pop(key, None)
 
 
 login_throttle = Throttle()

@@ -54,7 +54,9 @@ cp .env.example .env          # optional: edit settings
 docker compose up -d --build
 ```
 
-Open `http://your-server:8000`.
+Open `http://localhost:8000` on the same machine.
+
+By default Job Pot only listens on the machine it runs on, because sign-in and saved passwords must not cross the network unencrypted. To use it from other devices (your phone, another computer), either put it behind an HTTPS reverse proxy (see [HTTPS](#https)), or, on a home network you trust, set `JOBPOT_BIND=0.0.0.0` in `.env` and open `http://your-server:8000`.
 
 ### First sign-in
 
@@ -86,7 +88,9 @@ AI is used for: explaining fit scores, a full resume review, sorting employer em
 | Variable | Default | Meaning |
 |---|---|---|
 | `JOBPOT_SECRET_KEY` | generated | Master key for encrypting saved passwords (32+ characters). If empty, one is created in the data volume as `secret.key`. |
+| `JOBPOT_BIND` | `127.0.0.1` | Host address to publish on. `0.0.0.0` exposes plain HTTP to your network. |
 | `JOBPOT_PORT` | `8000` | Port on the host. |
+| `JOBPOT_ALLOW_PRIVATE_MAIL_HOSTS` | `0` | Set to `1` if a mailbox lives on a server inside your own network. Otherwise mail servers must have public addresses, so users can't make Job Pot connect to internal machines. |
 | `JOBPOT_HTTPS` | `0` | Set to `1` when served over HTTPS, so the session cookie is HTTPS-only. |
 | `JOBPOT_WORKER_INTERVAL` | `900` | Seconds between background runs. |
 | `OLLAMA_URL` | empty | Default Ollama address (the admin can change it in the app). |
@@ -103,7 +107,7 @@ jobs.example.com {
 }
 ```
 
-and set `JOBPOT_HTTPS=1`. If the proxy runs on the same host, change the port mapping in `compose.yaml` to `"127.0.0.1:8000:8000"` so the plain-HTTP port isn't exposed.
+and set `JOBPOT_HTTPS=1`. With the default `JOBPOT_BIND=127.0.0.1`, the plain-HTTP port is only reachable by a proxy on the same machine. If the proxy runs elsewhere, bind to an address only it can reach.
 
 ### Backups
 
@@ -136,12 +140,14 @@ The database tables are created automatically; there are no migrations yet (see 
 ## Security
 
 - **No default credentials.** The admin password is set on first sign-in, protected by a one-time token printed only to the server log.
-- **Passwords** are hashed with Argon2id. Sign-in locks for five minutes after five wrong attempts per username. Changing a password signs out your other sessions.
-- **Two-step sign-in** with any TOTP authenticator app.
+- **Passwords** are hashed with Argon2id. Sign-in locks for five minutes after five wrong attempts for a username from the same address, so a stranger can't lock you out. Changing a password signs out your other sessions.
+- **Two-step sign-in** with any TOTP authenticator app; a code can't be used twice.
 - **Saved site and mailbox passwords and two-step secrets are encrypted** with a key unique to each account (HKDF from the master key, Fernet). A copied row can't be decrypted with another account's key.
 - **Accounts are separate.** Every record belongs to one account and is looked up through a single ownership check, so another account's records look like they don't exist (404).
 - **Every form is CSRF-protected**, cookies are `SameSite=Lax` (and `Secure` with `JOBPOT_HTTPS=1`), and pages send a strict Content Security Policy (no inline scripts or styles, no third-party resources), `X-Frame-Options: DENY` and `nosniff`.
-- The AI server address is an admin-only setting, so users can't point the server at internal addresses.
+- The AI server address is an admin-only setting, and mailbox servers must be public addresses (unless the admin allows private ones), so users can't point the server at internal machines.
+- A saved mailbox password is only sent to the servers it was entered for. Changing the server, address or login means typing the password again.
+- Plain HTTP is only published on localhost by default.
 - The containers run as a non-root user.
 
 The code was audited with Claude Code's `security-review` skill and the `claude-security` plugin before release; see [`docs/security-audit.md`](docs/security-audit.md).

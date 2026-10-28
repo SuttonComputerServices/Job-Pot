@@ -4,6 +4,8 @@ from pathlib import Path
 DATA_DIR = Path(os.environ.get("JOBPOT_DATA", "data")).resolve()
 DATABASE_URL = os.environ.get("DATABASE_URL", f"sqlite:///{DATA_DIR / 'jobpot.db'}")
 HTTPS = os.environ.get("JOBPOT_HTTPS") == "1"
+# Self-hosted mail servers on the LAN need this; otherwise mailbox hosts must be public addresses (blocks SSRF).
+ALLOW_PRIVATE_MAIL_HOSTS = os.environ.get("JOBPOT_ALLOW_PRIVATE_MAIL_HOSTS") == "1"
 WORKER_INTERVAL = int(os.environ.get("JOBPOT_WORKER_INTERVAL", "900"))
 # Default instance-wide Ollama URL; admins can change it in the Admin page.
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "")

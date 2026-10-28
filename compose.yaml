@@ -4,11 +4,13 @@ services:
     image: job-pot:latest
     restart: unless-stopped
     ports:
-      - "${JOBPOT_PORT:-8000}:8000"
+      # Localhost only by default: put an HTTPS reverse proxy in front, or set JOBPOT_BIND=0.0.0.0 to accept plain HTTP from the network.
+      - "${JOBPOT_BIND:-127.0.0.1}:${JOBPOT_PORT:-8000}:8000"
     environment: &env
       JOBPOT_SECRET_KEY: ${JOBPOT_SECRET_KEY:-}
       JOBPOT_HTTPS: ${JOBPOT_HTTPS:-0}
       JOBPOT_WORKER_INTERVAL: ${JOBPOT_WORKER_INTERVAL:-900}
+      JOBPOT_ALLOW_PRIVATE_MAIL_HOSTS: ${JOBPOT_ALLOW_PRIVATE_MAIL_HOSTS:-0}
       OLLAMA_URL: ${OLLAMA_URL:-}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
     volumes:
