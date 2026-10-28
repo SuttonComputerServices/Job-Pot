@@ -262,3 +262,8 @@ footer { max-width: 1120px; margin: 0 auto 30px; padding: 0 16px; color: var(--m
 label.inline { display: flex; align-items: center; gap: 8px; }
 label.inline select { width: auto; }
 form.stack.wide { max-width: 760px; }
+.brand .pot-lid { fill: var(--manila); }
+.brand .pot-body { fill: var(--spruce); }
+.file .fit { align-content: start; padding-top: 16px; }
+.excerpt { margin: 0 0 4px; color: var(--muted); border-left: 2px solid var(--line); padding-left: 10px; max-width: 70ch; }
+input, select, textarea { font-weight: 400; }

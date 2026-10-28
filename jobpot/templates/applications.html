@@ -53,11 +53,12 @@
       {% set last = a.responses[-1] if a.responses else none %}
       {% if last %}
       <p class="reply-line"><span class="pill cat-{{ last.category }}">{{ last.category | capitalize }}</span> <strong>{{ last.subject or "(no subject)" }}</strong> <span class="muted small">{{ last.received_at.strftime("%-d %b, %H:%M") }}{% if a.responses | length > 1 %}, {{ a.responses | length }} emails{% endif %}</span></p>
+      <p class="excerpt small">{{ last.body | truncate(220) }}</p>
       {% else %}
       <p class="muted small">No reply from the employer yet.</p>
       {% endif %}
-      <details {% if last %}open{% endif %}>
-        <summary>{{ "Replies, suggested answers and actions" if last else "Details and actions" }}</summary>
+      <details>
+        <summary>{{ "Read, reply and suggested answers" if last else "Details and actions" }}</summary>
         <p class="small muted">{{ a.fit_notes }}</p>
         {% include "_responses.html" %}
         <div class="actions gap-top">

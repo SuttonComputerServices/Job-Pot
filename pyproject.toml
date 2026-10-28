@@ -31,7 +31,7 @@ test = ["pytest>=9"]
 packages = ["jobpot", "jobpot.web", "jobpot.connectors"]
 
 [tool.setuptools.package-data]
-jobpot = ["templates/*.html", "static/*"]
+jobpot = ["templates/*", "static/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
