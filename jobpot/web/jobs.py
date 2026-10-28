@@ -155,8 +155,7 @@ def _account(db, user, key: str) -> SiteAccount:
     return acc
 
 
-@router.post("/sites/{key}")
-async def save_site(request: Request, key: str, user=Depends(current_user), db=Depends(get_db)):
+async def _save_site(request: Request, key: str, user, db) -> SiteAccount:
     form = await request.form()
     conn, acc = REGISTRY.get(key), _account(db, user, key)
     acc.enabled = form.get("enabled") == "1"
@@ -173,20 +172,26 @@ async def save_site(request: Request, key: str, user=Depends(current_user), db=D
             acc.secret_enc = None
     acc.options = {o.name: str(form.get(o.name, "")).strip()[:2000] for o in conn.options}
     db.commit()
-    flash(request, f"{conn.label} settings saved.")
+    return acc
+
+
+@router.post("/sites/{key}")
+async def save_site(request: Request, key: str, user=Depends(current_user), db=Depends(get_db)):
+    await _save_site(request, key, user, db)
+    flash(request, f"{REGISTRY[key].label} settings saved.")
     return redirect(f"/sites#site-{key}")
 
 
 @router.post("/sites/{key}/search")
-def search_now(request: Request, key: str, user=Depends(current_user), db=Depends(get_db)):
+async def search_now(request: Request, key: str, user=Depends(current_user), db=Depends(get_db)):
+    from starlette.concurrency import run_in_threadpool
+
     from ..worker import discover_site  # worker imports connectors + Playwright; keep it off the import path
-    acc = _account(db, user, key)
-    db.commit()
+    acc = await _save_site(request, key, user, db)  # search with what's on screen, not the last saved form
     if not acc.enabled:
-        flash(request, "Turn the site on and save before searching.", "problem")
+        flash(request, "Tick the box to search this site, then press Search now.", "problem")
         return redirect(f"/sites#site-{key}")
-    n = discover_site(db, user, acc)
-    db.commit()
+    n = await run_in_threadpool(discover_site, db, user, acc)  # network calls; keep the event loop free
     if acc.last_error:
         flash(request, f"{REGISTRY[key].label}: {acc.last_error}", "problem")
     else:

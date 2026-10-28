@@ -185,3 +185,13 @@ def test_missing_required_in_real_browser():
         assert r.status == "needs_manual" and r.message.startswith("Dry run, not submitted. Filled: first name.")
     finally:
         ctx.__exit__(None, None, None)
+
+
+def test_prefilter_matches_whole_words():
+    from types import SimpleNamespace
+    from jobpot.connectors import browser
+    from jobpot.connectors.base import JobPosting
+    crit = SimpleNamespace(keywords="rest", titles="", exclude_keywords="", locations="", remote_only=False, min_salary=0)
+    a = JobPosting("1", "Engineer", "X", "", "", "Builds REST APIs")
+    b = JobPosting("2", "Engineer", "X", "", "", "Shows interest in people")
+    assert browser.relevant([a, b], crit) == [a]

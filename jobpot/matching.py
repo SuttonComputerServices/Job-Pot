@@ -20,7 +20,7 @@ def terms(text: str) -> list[str]:
     return [w for w in WORD.findall((text or "").lower()) if len(w) > 2 and w not in STOP]
 
 
-def _has(phrase: str, text: str) -> bool:
+def has_phrase(phrase: str, text: str) -> bool:
     return re.search(rf"(?<![a-z0-9]){re.escape(phrase)}(?![a-z0-9])", text) is not None
 
 
@@ -32,7 +32,7 @@ def excluded(criteria, posting) -> bool:
     if criteria is None:
         return False
     text = _job_text(posting) + " " + (posting.company or "").lower()
-    return any(_has(w, text) for w in split_list(criteria.exclude_keywords))
+    return any(has_phrase(w, text) for w in split_list(criteria.exclude_keywords))
 
 
 def _salary_max(text: str) -> int | None:
@@ -52,7 +52,7 @@ def filter_reason(criteria, posting) -> str | None:
     if criteria.remote_only and not remote:
         return "Not remote"
     places = split_list(criteria.locations)
-    if places and not remote and not any(_has(p, posting.location.lower()) for p in places):
+    if places and not remote and not any(has_phrase(p, posting.location.lower()) for p in places):
         return f"Location {posting.location or 'not given'} isn't in your list"
     top = _salary_max(posting.salary)
     if criteria.min_salary and top is not None and top < criteria.min_salary:
@@ -63,7 +63,7 @@ def filter_reason(criteria, posting) -> str | None:
 def score(resume_text: str, criteria, posting) -> tuple[int, str]:
     text = _job_text(posting)
     keywords = split_list(criteria.keywords) if criteria else []
-    found = [k for k in keywords if _has(k, text)]
+    found = [k for k in keywords if has_phrase(k, text)]
     # No keywords set: count keyword coverage as neutral rather than zero.
     kw_points = 60 * len(found) / len(keywords) if keywords else 30
     job_top = [w for w, _ in Counter(terms(text)).most_common(40)]
@@ -71,7 +71,7 @@ def score(resume_text: str, criteria, posting) -> tuple[int, str]:
     overlap = [w for w in job_top if w in resume_terms]
     vocab_points = 30 * len(overlap) / len(job_top) if job_top else 0
     titles = split_list(criteria.titles) if criteria else []
-    title_hit = any(_has(t, posting.title.lower()) for t in titles)
+    title_hit = any(has_phrase(t, posting.title.lower()) for t in titles)
     total = round(kw_points + vocab_points + (10 if title_hit else 0))
     notes = []
     if keywords:

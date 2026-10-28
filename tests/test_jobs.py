@@ -112,3 +112,19 @@ def test_criteria_saved_and_clamped():
     with SessionLocal() as db:
         cr = db.query(Criteria).one()
         assert cr.keywords == "python" and cr.min_fit == 100 and cr.max_per_day == 0
+
+
+def test_search_now_uses_the_form_on_screen(monkeypatch):
+    from jobpot import worker
+    seen = {}
+
+    def fake_discover(db, user, acc):
+        seen["boards"] = acc.options.get("boards")
+        return 0
+    monkeypatch.setattr(worker, "discover_site", fake_discover)
+    make_user()
+    with client() as c:
+        login(c)
+        c.post("/sites/greenhouse", data={"enabled": "1", "boards": "old", "csrf": csrf(c, "/sites")})
+        r = c.post("/sites/greenhouse/search", data={"enabled": "1", "boards": "gitlab", "csrf": csrf(c, "/sites")})
+        assert seen["boards"] == "gitlab" and "0 new postings" in r.text

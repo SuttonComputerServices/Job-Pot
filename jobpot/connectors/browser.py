@@ -65,7 +65,8 @@ def relevant(postings: list, criteria) -> list:
     terms = wanted_terms(criteria)
     if not terms:
         return postings
-    return [p for p in postings if any(t in f"{p.title}\n{p.description}".lower() for t in terms)]
+    from ..matching import has_phrase  # whole words: "rest" must not match "interest"
+    return [p for p in postings if any(has_phrase(t, f"{p.title}\n{p.description}".lower()) for t in terms)]
 
 
 def links(text: str) -> list[str]:
