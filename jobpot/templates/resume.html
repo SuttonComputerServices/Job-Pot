@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Resume{% endblock %}
+{% block content %}
+<h1>Resume</h1>
+<p class="muted">Job Pot scores every job against the text on this page. Upload your resume, check the text came through right, then work through the suggestions.</p>
+
+<h2>Your file</h2>
+{% if resume and resume.filename %}
+<p><strong>{{ resume.filename }}</strong> <span class="muted small">Last changed {{ resume.updated_at.day }} {{ resume.updated_at.strftime("%b %Y") }}</span></p>
+<div class="actions">
+  <a class="btn quiet" href="/resume/download">Download original</a>
+  {% if resume.text %}<a class="btn quiet" href="/resume/download.txt">Download text</a>{% endif %}
+</div>
+{% else %}
+<p>No file uploaded yet.</p>
+{% endif %}
+<form method="post" action="/resume/upload" enctype="multipart/form-data" class="stack gap-top">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>{{ "Replace with a new file" if resume and resume.filename else "Resume file" }} <span class="hint">PDF, Word (.docx) or plain text, up to 5 MB. Uploading replaces the text below.</span>
+    <input type="file" name="file" accept=".pdf,.docx,.txt,.md" required></label>
+  <div class="actions"><button>Upload</button></div>
+</form>
+
+<h2>Suggestions</h2>
+{% if groups %}
+{% for label, items in groups %}
+<h3>{{ label }}</h3>
+{% for s in items %}
+<div class="suggestion"><strong>{{ s.title }}.</strong> {{ s.detail }}</div>
+{% endfor %}
+{% endfor %}
+{% else %}
+<p>Upload a file or paste your resume text below to see suggestions.</p>
+{% endif %}
+
+{% if ai_on %}
+<form method="post" action="/resume/ai" class="actions gap-top">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <button class="quiet">Get an AI review</button>
+  <span class="muted small">Uses the local AI model. It can take a minute.</span>
+</form>
+{% endif %}
+{% if ai_result %}
+<h3>AI review</h3>
+<div class="suggestion">{{ ai_result }}</div>
+{% endif %}
+
+<h2>Resume text</h2>
+<form method="post" action="/resume/text" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Text used for scoring <span class="hint">Edit freely. Saving doesn't change your uploaded file.</span>
+    <textarea class="tall" name="text">{{ resume.text if resume else "" }}</textarea></label>
+  <div class="actions"><button>Save text</button></div>
+</form>
+{% endblock %}

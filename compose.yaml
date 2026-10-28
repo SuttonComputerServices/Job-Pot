@@ -1,0 +1,41 @@
+services:
+  web:
+    build: .
+    image: job-pot:latest
+    restart: unless-stopped
+    ports:
+      - "${JOBPOT_PORT:-8000}:8000"
+    environment: &env
+      JOBPOT_SECRET_KEY: ${JOBPOT_SECRET_KEY:-}
+      JOBPOT_HTTPS: ${JOBPOT_HTTPS:-0}
+      JOBPOT_WORKER_INTERVAL: ${JOBPOT_WORKER_INTERVAL:-900}
+      OLLAMA_URL: ${OLLAMA_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+    volumes:
+      - jobpot-data:/data
+
+  worker:
+    image: job-pot:latest
+    restart: unless-stopped
+    command: ["python", "-m", "jobpot.worker"]
+    environment: *env
+    volumes:
+      - jobpot-data:/data
+    shm_size: 1gb  # Chromium needs more shared memory than Docker's 64 MB default
+    healthcheck:
+      disable: true
+    depends_on:
+      web:
+        condition: service_healthy  # web creates the database and secret key first
+
+  # Optional local AI: docker compose --profile ai up -d
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ai"]
+    restart: unless-stopped
+    volumes:
+      - ollama-models:/root/.ollama
+
+volumes:
+  jobpot-data:
+  ollama-models:

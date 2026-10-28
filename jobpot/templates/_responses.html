@@ -1,1 +1,61 @@
-{# Filled in by the mailbox task. Context: a = Application with a.responses #}
+{# Employer replies for one application. Context: a has .responses; attach_choices (optional) adds an attach form. #}
+{% for r in a.responses %}
+<div class="reply-box" id="response-{{ r.id }}">
+  <div class="head">
+    <strong>{{ r.from_addr or "Unknown sender" }}</strong>
+    <span class="pill">{{ r.category | capitalize }}</span>
+    <span class="muted small">{{ r.received_at.strftime("%d %b %Y, %H:%M") }} UTC</span>
+  </div>
+  <p class="gap-top"><strong>{{ r.subject or "(no subject)" }}</strong></p>
+  <div class="mail">{{ r.body or "This message has no text." }}</div>
+
+  {% for s in r.suggestions %}
+  <details>
+    <summary>Suggested reply {{ loop.index }}</summary>
+    <form method="post" action="/responses/{{ r.id }}/reply" class="stack">
+      <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+      <label>Edit before sending <textarea name="body" required>{{ s }}</textarea></label>
+      <div class="actions"><button>Send this reply</button></div>
+    </form>
+  </details>
+  {% endfor %}
+
+  <form method="post" action="/responses/{{ r.id }}/reply" class="stack gap-top">
+    <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+    <label>Write your own reply <textarea name="body" required></textarea></label>
+    <div class="actions"><button>Send reply</button></div>
+  </form>
+
+  {% if r.replies %}
+  <p class="gap-top"><strong>Your replies</strong></p>
+  {% for reply in r.replies %}
+  <p class="muted small">Sent {{ reply.sent_at.strftime("%d %b %Y, %H:%M") }} UTC</p>
+  <div class="mail">{{ reply.body }}</div>
+  {% endfor %}
+  {% endif %}
+
+  <div class="actions gap-top">
+    {% if attach_choices is defined %}
+    <form method="post" action="/responses/{{ r.id }}/attach" class="actions">
+      <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+      <label>Application
+        <select name="application_id" required>
+          {% for c in attach_choices %}<option value="{{ c.id }}">{{ c.title or "Untitled" }}{% if c.company %} at {{ c.company }}{% endif %}</option>{% endfor %}
+        </select>
+      </label>
+      <button {% if not attach_choices %}disabled{% endif %}>Attach to application</button>
+    </form>
+    {% endif %}
+    <form method="post" action="/responses/{{ r.id }}/suggest">
+      <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+      <button class="quiet">New suggestions</button>
+    </form>
+    <form method="post" action="/responses/{{ r.id }}/delete">
+      <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+      <button class="warn">Delete message</button>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="muted small">No reply from the employer yet.</p>
+{% endfor %}

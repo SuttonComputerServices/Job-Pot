@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Mailbox{% endblock %}
+{% block content %}
+<h1>Mailbox</h1>
+<p>Use a separate email address just for job applications. Job Pot reads employer replies from it, matches each one to an application, and sends your answers from it.</p>
+<p class="muted small">{% if mb.last_checked_at %}Last checked {{ mb.last_checked_at.strftime("%d %b %Y, %H:%M") }} UTC.{% else %}Not checked yet.{% endif %}</p>
+{% if mb.last_error %}<p class="note problem"><strong>{{ mb.last_error }}</strong> Check the settings below, then use Test connection.</p>{% endif %}
+
+<form method="post" action="/mailbox" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label class="check"><input type="checkbox" name="enabled" value="1" {% if mb.enabled %}checked{% endif %}> Check this mailbox for employer replies</label>
+  <label>Email address <input type="email" name="address" value="{{ mb.address }}" placeholder="jobs@example.com" autocomplete="off"></label>
+  <div class="row">
+    <label>Login <span class="hint">Usually the full email address.</span><input name="login" value="{{ mb.login }}" autocomplete="off"></label>
+    <label>Password <span class="hint">{% if mb.password_enc %}Saved. Leave blank to keep it.{% else %}Not saved yet.{% endif %}</span><input type="password" name="password" autocomplete="new-password"></label>
+  </div>
+  <fieldset>
+    <legend>Incoming mail (IMAP)</legend>
+    <div class="row">
+      <label>Server <input name="imap_host" value="{{ mb.imap_host }}" placeholder="imap.example.com" autocomplete="off"></label>
+      <label>Port <span class="hint">993 for SSL, 143 for STARTTLS.</span><input type="number" name="imap_port" value="{{ mb.imap_port }}" min="1" max="65535" required></label>
+    </div>
+  </fieldset>
+  <fieldset>
+    <legend>Outgoing mail (SMTP)</legend>
+    <div class="row">
+      <label>Server <input name="smtp_host" value="{{ mb.smtp_host }}" placeholder="smtp.example.com" autocomplete="off"></label>
+      <label>Port <span class="hint">587 with STARTTLS, 465 without.</span><input type="number" name="smtp_port" value="{{ mb.smtp_port }}" min="1" max="65535" required></label>
+    </div>
+    <label class="check gap-top"><input type="checkbox" name="smtp_starttls" value="1" {% if mb.smtp_starttls %}checked{% endif %}> Use STARTTLS. Untick for SSL on port 465.</label>
+  </fieldset>
+  <div class="actions"><button>Save mailbox</button></div>
+</form>
+
+<div class="actions gap-top">
+  <form method="post" action="/mailbox/test">
+    <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+    <button class="quiet">Test connection</button>
+  </form>
+  <form method="post" action="/mailbox/check">
+    <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+    <button class="quiet">Check mail now</button>
+  </form>
+</div>
+<p class="muted small">Both buttons use the saved settings, so save your changes first.</p>
+
+<h2>Settings for common providers</h2>
+<table>
+  <tr><th>Provider</th><th>Incoming (IMAP)</th><th>Outgoing (SMTP)</th><th>Password</th></tr>
+  <tr><td>Gmail</td><td><code>imap.gmail.com</code> port 993</td><td><code>smtp.gmail.com</code> port 587</td><td>Needs an app password. Turn on 2-Step Verification, then create one in your Google account.</td></tr>
+  <tr><td>Outlook</td><td><code>outlook.office365.com</code> port 993</td><td><code>smtp.office365.com</code> port 587</td><td>Needs an app password from your Microsoft account security settings.</td></tr>
+  <tr><td>Fastmail</td><td><code>imap.fastmail.com</code> port 993</td><td><code>smtp.fastmail.com</code> port 465, STARTTLS off</td><td>Needs an app password from Fastmail's settings.</td></tr>
+  <tr><td>Self-hosted</td><td>Your mail server's name, port 993</td><td>Your mail server's name, port 587</td><td>Your normal mailbox password.</td></tr>
+</table>
+
+<h2>Replies not matched to an application</h2>
+{% if unmatched %}
+<p>Job Pot couldn't tell which application these are about. Attach each one to the right application.</p>
+{% set a = {"responses": unmatched} %}
+{% include "_responses.html" %}
+{% else %}
+<p class="muted">Nothing here. Every reply so far is matched to an application.</p>
+{% endif %}
+{% endblock %}

@@ -20,9 +20,13 @@ def master_key() -> bytes:
     path = DATA_DIR / "secret.key"
     if not path.exists():
         DATA_DIR.mkdir(parents=True, exist_ok=True)
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "wb") as f:
-            f.write(base64.urlsafe_b64encode(os.urandom(32)))
+        try:
+            fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:  # the other process (web/worker) won the race
+            pass
+        else:
+            with os.fdopen(fd, "wb") as f:
+                f.write(base64.urlsafe_b64encode(os.urandom(32)))
     return path.read_bytes().strip()
 
 
