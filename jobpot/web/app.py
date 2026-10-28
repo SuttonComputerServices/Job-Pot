@@ -11,7 +11,7 @@ from ..config import HTTPS
 from ..crypto import derive
 from ..db import SessionLocal, init_db
 from ..security import SETUP_TOKEN, ensure_admin
-from . import account, auth
+from . import account, auth, jobs, mailbox, resume_page
 from .deps import LoginRequired, PasswordChangeRequired, csrf_protect, flash, optional_user, redirect, render
 
 log = logging.getLogger("jobpot")
@@ -71,5 +71,5 @@ def healthz():
     return {"ok": True}
 
 
-for module in (auth, account):
+for module in (auth, account, jobs, resume_page, mailbox):
     app.include_router(module.router, dependencies=[Depends(csrf_protect)])
