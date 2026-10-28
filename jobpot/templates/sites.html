@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Job sites{% endblock %}
+{% block content %}
+<h1>Job sites</h1>
+<p class="muted">Choose what counts as a good job, then connect the sites to search. Jobs that pass your filters appear on the Applications page, best fit first.</p>
+
+<h2 id="criteria">What to look for</h2>
+<form method="post" action="/sites/criteria" class="stack wide">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Job titles you want <span class="hint">Comma separated. Searches use these first. For example: backend developer, python engineer</span><input name="titles" value="{{ criteria.titles }}"></label>
+  <label>Keywords <span class="hint">Skills or terms a good posting mentions. Each one found adds to the fit score.</span><input name="keywords" value="{{ criteria.keywords }}"></label>
+  <label>Leave out jobs that mention <span class="hint">For example: senior, clearance, unpaid</span><input name="exclude_keywords" value="{{ criteria.exclude_keywords }}"></label>
+  <div class="row">
+    <label>Locations <span class="hint">Comma separated. Leave empty for anywhere.</span><input name="locations" value="{{ criteria.locations }}"></label>
+    <label>Lowest yearly pay <span class="hint">Only checked when a posting lists pay.</span><input type="number" name="min_salary" min="0" step="1000" value="{{ criteria.min_salary }}"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="remote_only" value="1" {% if criteria.remote_only %}checked{% endif %}> Remote jobs only</label>
+  <div class="row">
+    <label>Apply automatically when fit is at least <input type="number" name="min_fit" min="0" max="100" value="{{ criteria.min_fit }}"></label>
+    <label>Most applications per day <input type="number" name="max_per_day" min="0" max="100" value="{{ criteria.max_per_day }}"></label>
+  </div>
+  <div class="actions"><button>Save criteria</button></div>
+</form>
+
+<h2>Sites</h2>
+{% if not user.automation_enabled %}<p class="note">Automation is off, so nothing runs in the background. You can still press <em>Search now</em>. Turn automation on in <a href="/settings">Settings</a>.</p>{% endif %}
+{% for c in connectors %}
+{% set acc = accounts.get(c.key) %}
+<section class="site" id="site-{{ c.key }}">
+  <h3>{{ c.label }}
+    {% if acc and acc.enabled %}<span class="pill on">On</span>{% else %}<span class="pill">Off</span>{% endif %}
+    {% if c.can_apply %}<span class="pill">Can apply for you</span>{% elif c.can_discover %}<span class="pill">Search only</span>{% else %}<span class="pill">Track by hand</span>{% endif %}
+  </h3>
+  {% if c.risk_note %}<p class="note problem small">{{ c.risk_note }}</p>{% endif %}
+  {% if acc and acc.last_error %}<p class="small problem-text">Last run: {{ acc.last_error }}</p>{% elif acc and acc.last_run_at %}<p class="small muted">Last searched {{ acc.last_run_at.strftime("%-d %b, %H:%M") }} UTC.</p>{% endif %}
+  {% if c.can_discover or c.can_apply %}
+  <form method="post" action="/sites/{{ c.key }}" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+    <label class="check"><input type="checkbox" name="enabled" value="1" {% if acc and acc.enabled %}checked{% endif %}> Search {{ c.label }}</label>
+    {% for o in c.options %}
+    <label>{{ o.label }}{% if o.hint %} <span class="hint">{{ o.hint }}</span>{% endif %}<input name="{{ o.name }}" value="{{ (acc.options or {}).get(o.name, '') if acc else '' }}"></label>
+    {% endfor %}
+    {% if c.needs_login %}
+    <div class="row">
+      <label>Sign-in email <input name="login" value="{{ acc.login if acc else '' }}" autocomplete="off"></label>
+      <label>Password <span class="hint">{{ "Saved and encrypted. Leave empty to keep it." if acc and acc.secret_enc else "Stored encrypted." }}</span><input type="password" name="password" autocomplete="new-password"></label>
+    </div>
+    {% if acc and acc.secret_enc %}<label class="check"><input type="checkbox" name="forget" value="1"> Delete the saved password</label>{% endif %}
+    {% endif %}
+    {% if c.can_apply %}
+    {% if c.risk_note %}<label class="check"><input type="checkbox" name="risk_ack" value="1" {% if acc and acc.risk_ack %}checked{% endif %}> I understand the risk above and want Job Pot to apply on {{ c.label }} for me</label>{% endif %}
+    <label class="check"><input type="checkbox" name="auto_submit" value="1" {% if acc and acc.auto_submit %}checked{% endif %}> Apply automatically to jobs that meet my criteria</label>
+    {% endif %}
+    <div class="actions">
+      <button>Save {{ c.label }}</button>
+      {% if c.can_discover %}<button class="quiet" formaction="/sites/{{ c.key }}/search">Search now</button>{% endif %}
+    </div>
+  </form>
+  {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

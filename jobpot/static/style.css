@@ -243,3 +243,22 @@ footer { max-width: 1120px; margin: 0 auto 30px; padding: 0 16px; color: var(--m
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 .gap-top { margin-top: 18px; }
+.spread { justify-content: space-between; }
+.filters { margin: 4px 0 18px; }
+.filters .btn { padding: 5px 12px; font-size: 0.9rem; }
+.filters .count { font-variant-numeric: tabular-nums; opacity: 0.75; margin-left: 2px; }
+.add-job { margin: 0 0 20px; border: 1px dashed var(--line); border-radius: 4px; padding: 10px 14px; }
+.add-job summary { cursor: pointer; font-weight: 700; color: var(--spruce); }
+.add-job form { margin-top: 14px; }
+.empty { border: 1px dashed var(--line); border-radius: 4px; padding: 20px 24px; }
+.empty h2 { margin-top: 0; }
+.meta { margin: 2px 0 6px; }
+.reply-line { margin: 4px 0; }
+.problem-text { color: var(--kraft); font-weight: 650; }
+.pill.on { background: var(--spruce); color: var(--spruce-ink); }
+.pill.cat-interview, .pill.cat-offer { background: var(--spruce); color: var(--spruce-ink); }
+.pill.cat-rejection { background: var(--kraft); color: var(--sheet); }
+.pill.cat-info { background: var(--manila); color: var(--manila-ink); }
+label.inline { display: flex; align-items: center; gap: 8px; }
+label.inline select { width: auto; }
+form.stack.wide { max-width: 760px; }

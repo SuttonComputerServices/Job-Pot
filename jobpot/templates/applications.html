@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Applications{% endblock %}
+{% block content %}
+<div class="actions spread">
+  <h1>Applications</h1>
+</div>
+<p class="muted">Best fit first. Scores compare each posting with your resume and the criteria on the Job sites page.</p>
+
+<nav class="filters actions" aria-label="Filter by status">
+  <a href="/" class="btn {{ '' if not current else 'quiet' }}">Active</a>
+  {% for key, label in statuses.items() %}
+  <a href="/?status={{ key }}" class="btn {{ '' if current == key else 'quiet' }}">{{ label }} <span class="count">{{ counts[key] }}</span></a>
+  {% endfor %}
+  <a href="/?status=all" class="btn {{ '' if current == 'all' else 'quiet' }}">All</a>
+</nav>
+
+<details class="add-job">
+  <summary>Add a job by hand</summary>
+  <form method="post" action="/applications" class="stack">
+    <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+    <div class="row">
+      <label>Job title <input name="title" required maxlength="300"></label>
+      <label>Company <input name="company" required maxlength="300"></label>
+    </div>
+    <div class="row">
+      <label>Found on <select name="site">{% for k, v in manual_sites.items() %}<option value="{{ k }}">{{ v }}</option>{% endfor %}</select></label>
+      <label>Location <input name="location" maxlength="300"></label>
+    </div>
+    <label>Link to the posting <input type="url" name="url" placeholder="https://"></label>
+    <label>Job description <span class="hint">Paste it so Job Pot can score the fit and match employer emails.</span><textarea name="description"></textarea></label>
+    <label class="check"><input type="checkbox" name="applied" value="1"> I've already applied</label>
+    <div class="actions"><button>Add job</button></div>
+  </form>
+</details>
+
+{% if not apps %}
+<div class="empty">
+  <h2>Nothing here yet</h2>
+  <p>Connect a job site and set your criteria on the <a href="/sites">Job sites</a> page, upload your <a href="/resume">resume</a>, then press <em>Search now</em>. You can also add a job by hand above.</p>
+</div>
+{% else %}
+<ol class="files">
+  {% for a in apps %}
+  <li class="file" id="app-{{ a.id }}">
+    <div class="fit" title="Fit score out of 100">{{ a.fit_score }}<small>fit</small></div>
+    <div class="body">
+      <div class="head">
+        <h3>{% if a.url %}<a href="{{ a.url }}" target="_blank" rel="noopener noreferrer">{{ a.title }}</a>{% else %}{{ a.title }}{% endif %}</h3>
+        <span class="status {{ a.status }}">{{ statuses[a.status] }}</span>
+      </div>
+      <p class="meta">{{ a.company }}{% if a.location %}, {{ a.location }}{% endif %}. <span class="muted">{{ site_label(a.site) }}{% if a.submitted_at %}, applied {{ a.submitted_at.strftime("%-d %b %Y") }}{% endif %}</span></p>
+      {% if a.error %}<p class="small problem-text">{{ a.error }}</p>{% endif %}
+      {% set last = a.responses[-1] if a.responses else none %}
+      {% if last %}
+      <p class="reply-line"><span class="pill cat-{{ last.category }}">{{ last.category | capitalize }}</span> <strong>{{ last.subject or "(no subject)" }}</strong> <span class="muted small">{{ last.received_at.strftime("%-d %b, %H:%M") }}{% if a.responses | length > 1 %}, {{ a.responses | length }} emails{% endif %}</span></p>
+      {% else %}
+      <p class="muted small">No reply from the employer yet.</p>
+      {% endif %}
+      <details {% if last %}open{% endif %}>
+        <summary>{{ "Replies, suggested answers and actions" if last else "Details and actions" }}</summary>
+        <p class="small muted">{{ a.fit_notes }}</p>
+        {% include "_responses.html" %}
+        <div class="actions gap-top">
+          <form method="post" action="/applications/{{ a.id }}/status" class="actions">
+            <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+            <label class="inline">Status <select name="status">{% for k, v in statuses.items() %}<option value="{{ k }}" {% if k == a.status %}selected{% endif %}>{{ v }}</option>{% endfor %}</select></label>
+            <button class="quiet">Update</button>
+          </form>
+          {% if ai_on %}
+          <form method="post" action="/applications/{{ a.id }}/ai"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button class="quiet">Ask AI about the fit</button></form>
+          {% endif %}
+          <form method="post" action="/applications/{{ a.id }}/delete"><input type="hidden" name="csrf" value="{{ csrf_token(request) }}"><button class="warn">Remove</button></form>
+        </div>
+      </details>
+    </div>
+  </li>
+  {% endfor %}
+</ol>
+{% endif %}
+{% endblock %}
