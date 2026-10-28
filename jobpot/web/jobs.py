@@ -89,6 +89,8 @@ def set_status(request: Request, aid: int, status: str = Form(...), user=Depends
     a.status = status
     if status == "submitted" and not a.submitted_at:
         a.submitted_at = datetime.now(timezone.utc)
+    elif status == "found":
+        a.submitted_at = None
     db.commit()
     return redirect(f"/#app-{a.id}")
 

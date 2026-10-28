@@ -208,3 +208,39 @@ def test_saved_password_dropped_when_server_changes():
         c.post("/mailbox", data={**base, "imap_host": "imap.attacker.example", "enabled": "", "csrf": csrf(c, "/mailbox")})
         with SessionLocal() as db:
             assert db.query(Mailbox).one().password_enc is None
+
+
+def test_malformed_message_is_skipped_not_jamming(db, monkeypatch):
+    u = setup_user(db)
+    raw8bit = b"From: a@b.com\r\nSubject: Hi\r\nMessage-ID: <\xe9t\xe9@b.com>\r\nDate: \xff\xfe\r\n\r\nBody\r\n"
+    fake = FakeIMAP({4: raw8bit, 5: PLAIN})
+    monkeypatch.setattr(mail, "_connect", lambda mb, pw: fake)
+    real_store = mail._store
+
+    def flaky_store(db, user, msg):
+        if "<m1@acme.com>" not in str(msg.get("Message-ID")):
+            return real_store(db, user, msg)  # the 8-bit one must store fine now
+        raise RuntimeError("unexpected parser failure")
+    monkeypatch.setattr(mail, "_store", flaky_store)
+    assert mail.poll(db, u) == 1
+    mb = mail.mailbox_of(db, u)
+    assert mb.last_uid == 5 and mb.last_error == ""
+
+
+def test_switching_mailbox_restarts_uid_tracking():
+    from .helpers import client, csrf, login, make_user
+    uid = make_user()
+    base = {"address": "jobs@example.com", "imap_host": "imap.example.com", "imap_port": "993", "smtp_host": "smtp.example.com",
+            "smtp_port": "587", "smtp_starttls": "1", "login": "jobs@example.com", "enabled": "1", "password": "pw-1"}
+    with client() as c:
+        login(c)
+        c.post("/mailbox", data={**base, "csrf": csrf(c, "/mailbox")})
+        with SessionLocal() as db:
+            db.query(Mailbox).update({Mailbox.last_uid: 48213})
+            db.commit()
+        c.post("/mailbox", data={**base, "csrf": csrf(c, "/mailbox")})
+        with SessionLocal() as db:
+            assert db.query(Mailbox).one().last_uid == 48213  # same mailbox keeps its place
+        c.post("/mailbox", data={**base, "imap_host": "imap.new.example", "csrf": csrf(c, "/mailbox")})
+        with SessionLocal() as db:
+            assert db.query(Mailbox).one().last_uid == 0

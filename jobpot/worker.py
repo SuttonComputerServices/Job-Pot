@@ -69,26 +69,29 @@ def discover_site(db, user, account) -> int:
         seen = set(db.scalars(select(Application.external_id).where(
             Application.user_id == user.id, Application.site == account.site)))
         for p in postings:
-            if p.external_id in seen or matching.excluded(criteria, p):
+            ext = p.external_id[:300]
+            if ext in seen or matching.excluded(criteria, p):
                 continue
-            seen.add(p.external_id)
+            seen.add(ext)
             reason = matching.filter_reason(criteria, p)
             fit, notes = matching.score(resume.text if resume else "", criteria, p)
             db.add(Application(
-                user_id=user.id, site=account.site, external_id=p.external_id[:300], title=p.title[:300],
+                user_id=user.id, site=account.site, external_id=ext, title=p.title[:300],
                 company=p.company[:300], location=p.location[:300], url=p.url, description=p.description,
                 salary=p.salary[:100], fit_score=fit, fit_notes=notes,
                 status="skipped" if reason else "found", error=reason or "",
             ))
             new += 1
         account.last_error = ""
-    except Exception as e:
+        account.last_run_at = now()
+        db.commit()
+    except Exception as e:  # includes a duplicate insert when web and worker search the same site at once
         db.rollback()
         new = 0
         log.warning("discover failed for user %s site %s: %s", user.id, account.site, _short(e))
         account.last_error = _short(e)
-    account.last_run_at = now()
-    db.commit()
+        account.last_run_at = now()
+        db.commit()
     return new
 
 
@@ -110,6 +113,7 @@ def apply_pending(db, user) -> int:
     # Attempts per run are capped too, so a run of needs_manual results can't hold the loop for hours.
     apps = db.scalars(select(Application).where(
         Application.user_id == user.id, Application.status == "found", Application.fit_score >= min_fit,
+        ~Application.external_id.startswith("manual-"),  # added by hand: the user applies themselves
         Application.site.in_(accounts)).order_by(Application.fit_score.desc(), Application.id).limit(cap - done)).all()
     resume = _resume(db, user)
     submitted = 0

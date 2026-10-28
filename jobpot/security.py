@@ -69,7 +69,7 @@ def ensure_admin(db) -> str | None:
 
 
 def setup_token_ok(token: str) -> bool:
-    return SETUP_TOKEN.exists() and hmac.compare_digest(SETUP_TOKEN.read_text().strip(), token.strip())
+    return SETUP_TOKEN.exists() and hmac.compare_digest(SETUP_TOKEN.read_text().strip().encode(), token.strip().encode())
 
 
 class Throttle:

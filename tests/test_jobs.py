@@ -128,3 +128,33 @@ def test_search_now_uses_the_form_on_screen(monkeypatch):
         c.post("/sites/greenhouse", data={"enabled": "1", "boards": "old", "csrf": csrf(c, "/sites")})
         r = c.post("/sites/greenhouse/search", data={"enabled": "1", "boards": "gitlab", "csrf": csrf(c, "/sites")})
         assert seen["boards"] == "gitlab" and "0 new postings" in r.text
+
+
+def test_salary_without_commas_and_status_reset():
+    assert "below" in matching.filter_reason(crit(min_salary=120000), post(salary="$90000 - $110000"))
+    assert matching.filter_reason(crit(min_salary=120000), post(salary="USD 120000-150000")) is None
+    uid = make_user()
+    aid = _add(uid, "Job", 50, "submitted")
+    with client() as c:
+        login(c)
+        c.post(f"/applications/{aid}/status", data={"status": "submitted", "csrf": csrf(c, "/")})
+        c.post(f"/applications/{aid}/status", data={"status": "found", "csrf": csrf(c, "/")})
+    with SessionLocal() as db:
+        assert db.get(Application, aid).submitted_at is None
+
+
+def test_theme_switch_after_post_page_goes_somewhere_valid():
+    make_user()
+    with client() as c:
+        login(c)
+        r = c.post("/profile/username", data={"new_username": "x", "password": "wrong", "csrf": csrf(c, "/profile")})
+        assert 'name="back" value="/settings"' in r.text
+
+
+def test_non_ascii_totp_code_is_rejected_cleanly():
+    make_user()
+    with client() as c:
+        login(c)
+        c.post("/settings/2fa/start", data={"csrf": csrf(c, "/settings")})
+        r = c.post("/settings/2fa/confirm", data={"code": "１２３４５６", "csrf": csrf(c, "/settings")})
+        assert r.status_code == 400

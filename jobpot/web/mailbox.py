@@ -76,6 +76,8 @@ def mailbox_save(request: Request, address: str = Form(""), imap_host: str = For
     mb.address, mb.imap_host, mb.imap_port, mb.smtp_host, mb.smtp_port = address, imap_host, ip, smtp_host, sp
     mb.smtp_starttls, mb.login, mb.enabled = smtp_starttls == "1", login.strip()[:200], on
     mb.password_enc = crypto.encrypt(user.id, password) if password else kept
+    if moved:
+        mb.last_uid = 0  # UIDs belong to one mailbox; a different one starts over
     db.add(mb)
     db.commit()
     flash(request, "Mailbox saved." + (" Job Pot will check it for replies." if on else " It won't be checked until you turn it on."))

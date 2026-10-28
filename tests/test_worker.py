@@ -215,3 +215,29 @@ def test_run_once_isolates_users(db, sites, monkeypatch):
 def test_build_profile_without_resume(db, user):
     p = worker.build_profile(user, None)
     assert p.resume_path is None and p.full_name == "Ann Example" and p.resume_text == ""
+
+
+def test_hand_added_jobs_are_never_auto_applied(db, user, sites):
+    sites["a"] = Fake("a", results=[ApplyResult("submitted")])
+    account(db, user, "a", auto_submit=True, risk_ack=True)
+    seed(db, user, 1)
+    db.query(Application).update({Application.external_id: "manual-abc"})
+    db.commit()
+    assert worker.apply_pending(db, user) == 0 and sites["a"].applied == []
+
+
+def test_discover_never_raises_on_duplicate_insert(db, user, sites, monkeypatch):
+    from jobpot.db import SessionLocal
+    sites["a"] = Fake("a", postings=[JobPosting("p1", "Python dev", "Acme", "Remote", "https://x")])
+    acc = account(db, user, "a")
+    real_add = db.add
+
+    def racing_add(obj):  # another process inserts the same posting first
+        if isinstance(obj, Application):
+            with SessionLocal() as other:
+                other.add(Application(user_id=obj.user_id, site=obj.site, external_id=obj.external_id, title="x", company="y"))
+                other.commit()
+        real_add(obj)
+    monkeypatch.setattr(db, "add", racing_add)
+    assert worker.discover_site(db, user, acc) == 0
+    assert "UNIQUE" in acc.last_error

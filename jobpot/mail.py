@@ -2,6 +2,7 @@
 import email
 import imaplib
 import ipaddress
+import logging
 import socket
 import re
 import smtplib
@@ -20,6 +21,7 @@ from .models import Application, Mailbox, Reply, Response, now
 MAX_BODY = 20000
 FIRST_RUN = 50  # first poll imports only the newest messages, not a whole inbox
 LABELS = ("interview", "rejection", "offer", "info", "other")
+log = logging.getLogger("jobpot.mail")
 MAIL_ERRORS = (imaplib.IMAP4.error, OSError, UnicodeError, crypto.InvalidToken)  # smtplib/ssl errors are OSErrors
 # Checked in order: a rejection often also says "thank you for applying".
 RULES = (
@@ -172,7 +174,7 @@ def _header(msg: Message, name: str) -> str:
 
 def _received(msg: Message):
     try:
-        dt = parsedate_to_datetime(msg.get("Date", ""))
+        dt = parsedate_to_datetime(str(msg.get("Date") or ""))
     except (TypeError, ValueError):
         return now()
     return dt.astimezone(timezone.utc) if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
@@ -193,7 +195,7 @@ def _matches(app: Application, name: str, labels: set[str], subject: str, body: 
             return True
         if re.sub(r"[^a-z0-9]", "", core.lower()) in labels:
             return True
-    return bool(app.title) and re.search(rf"\b{re.escape(app.title)}\b", subject, re.I) is not None
+    return bool(app.title) and re.search(rf"(?<!\w){re.escape(app.title)}(?!\w)", subject, re.I) is not None
 
 
 def match_application(db, user, from_addr: str, subject: str, body: str) -> Application | None:
@@ -259,7 +261,7 @@ def suggest_replies(db, user, response: Response, application: Application | Non
 
 
 def _store(db, user, msg: Message) -> int:
-    message_id = msg.get("Message-ID", "").strip()[:500]
+    message_id = _header(msg, "Message-ID")[:500]
     if message_id and db.scalar(select(Response.id).where(Response.user_id == user.id, Response.message_id == message_id)):
         return 0
     r = Response(user_id=user.id, message_id=message_id, from_addr=_header(msg, "From")[:500],
@@ -294,8 +296,13 @@ def poll(db, user) -> int:
                 _, parts = conn.uid("FETCH", str(uid), "(BODY.PEEK[])")
                 raw = next((p[1] for p in parts or [] if isinstance(p, tuple)), None)
                 if raw:
-                    new += _store(db, user, email.message_from_bytes(raw))
+                    try:
+                        new += _store(db, user, email.message_from_bytes(raw))
+                    except Exception:  # one malformed message must not block every later one
+                        db.rollback()
+                        log.exception("skipped unreadable message uid %s for user %s", uid, user.id)
                 mb.last_uid = uid
+                db.commit()  # per message, so a later failure keeps what was already imported
         finally:
             try:
                 conn.logout()

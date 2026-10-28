@@ -22,7 +22,7 @@ def totp_ok(user: User, code: str) -> bool:
     totp, code = pyotp.TOTP(crypto.decrypt(user.id, user.totp_secret_enc)), code.replace(" ", "")
     now_step = int(time.time()) // totp.interval
     for step in (now_step - 1, now_step, now_step + 1):
-        if step > (user.totp_last_step or 0) and hmac.compare_digest(totp.at(step * totp.interval), code):
+        if step > (user.totp_last_step or 0) and hmac.compare_digest(totp.at(step * totp.interval).encode(), code.encode()):
             user.totp_last_step = step
             return True
     return False

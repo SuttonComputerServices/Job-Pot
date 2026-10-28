@@ -35,7 +35,7 @@ async def csrf_protect(request: Request):
     form = await request.form()  # cached on the request, so route Form() params still work
     sent = str(form.get("csrf") or request.headers.get("x-csrf-token", ""))
     expected = request.session.get("csrf", "")
-    if not expected or not secrets.compare_digest(sent, expected):
+    if not expected or not secrets.compare_digest(sent.encode(), expected.encode()):
         raise HTTPException(403, "This form expired. Reload the page and try again.")
 
 

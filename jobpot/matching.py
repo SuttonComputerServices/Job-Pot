@@ -37,7 +37,7 @@ def excluded(criteria, posting) -> bool:
 
 def _salary_max(text: str) -> int | None:
     nums = []
-    for n, k in re.findall(r"\$?\s?(\d{2,3}(?:,\d{3})+|\d{2,3})(\s?[kK])?", text or ""):
+    for n, k in re.findall(r"\$?\s?(\d{2,3}(?:,\d{3})+|\d{4,7}|\d{2,3})(\s?[kK])?", text or ""):
         v = int(n.replace(",", "")) * (1000 if k else 1)
         if v >= 10000:  # ignore hourly rates and stray numbers
             nums.append(v)

@@ -26,7 +26,7 @@ def _salary(r: dict | None) -> str:
     if not r or r.get("min") is None:
         return ""
     per = " ".join((r.get("interval") or "").split("-")[:2])  # "per-year-salary" -> "per year"
-    return f"{r.get('currency', '')} {r['min']:,}-{r.get('max', r['min']):,} {per}".strip()
+    return f"{r.get('currency', '')} {r['min']:,}-{(r.get('max') or r['min']):,} {per}".strip()
 
 
 def parse_postings(data: list, company: str) -> list[JobPosting]:
