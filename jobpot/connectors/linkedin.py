@@ -181,5 +181,5 @@ def _easy_apply(page, url: str, profile) -> ApplyResult:
 LINKEDIN = LinkedIn(
     key="linkedin", label="LinkedIn", needs_login=True, can_apply=True,
     risk_note="LinkedIn's user agreement forbids automated tools and may restrict accounts; keep the daily limit low.",
-    options=[Option("location", "Search location", "For example: Remote, or Austin, Texas")],
+    options=[Option("location", "Search location", "For example: Remote, or Austin, Texas", required=False)],
 )

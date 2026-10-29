@@ -36,6 +36,7 @@ class Option:
     name: str   # key in SiteAccount.options
     label: str
     hint: str = ""
+    required: bool = True  # searching can't start while a required option is empty
 
 
 @dataclass
@@ -47,6 +48,12 @@ class Connector:
     can_apply: bool = False
     risk_note: str = ""
     options: list[Option] = field(default_factory=list)
+
+    def ready_to_search(self, account) -> bool:
+        """Switched on, searchable, and every required option filled in."""
+        opts = (account.options or {}) if account else {}
+        return bool(account and account.enabled and self.can_discover
+                    and all(str(opts.get(o.name, "")).strip() for o in self.options if o.required))
 
     def discover(self, account, criteria, secret: str | None) -> list[JobPosting]:
         """account: SiteAccount, criteria: Criteria, secret: decrypted site password or None."""

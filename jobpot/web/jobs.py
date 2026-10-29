@@ -178,6 +178,29 @@ async def _save_site(request: Request, key: str, user, db) -> SiteAccount:
     return acc
 
 
+@router.post("/sites/search-all")
+async def search_all(request: Request, user=Depends(current_user), db=Depends(get_db)):
+    from starlette.concurrency import run_in_threadpool
+
+    from ..worker import discover_site
+    accounts = {a.site: a for a in db.scalars(select(SiteAccount).where(SiteAccount.user_id == user.id))}
+    ready = [(c, accounts[c.key]) for c in REGISTRY.values() if c.ready_to_search(accounts.get(c.key))]
+    if not ready:
+        flash(request, "No site is set up for searching yet. Turn a site on and fill in its boxes, then save it.", "problem")
+        return redirect("/sites")
+    total, worked = 0, []
+    for conn, acc in ready:  # one at a time, like the background worker
+        n = await run_in_threadpool(discover_site, db, user, acc)
+        if acc.last_error:
+            flash(request, f"{conn.label}: {acc.last_error}", "problem")
+        else:
+            total += n
+            worked.append(conn.label)
+    if worked:
+        flash(request, f"Searched {', '.join(worked)}: {total} new posting{'s' if total != 1 else ''} added to Applications.")
+    return redirect("/sites")
+
+
 @router.post("/sites/{key}")
 async def save_site(request: Request, key: str, user=Depends(current_user), db=Depends(get_db)):
     await _save_site(request, key, user, db)

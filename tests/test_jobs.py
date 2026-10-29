@@ -161,3 +161,37 @@ def test_non_ascii_totp_code_is_rejected_cleanly():
         c.post("/settings/2fa/start", data={"csrf": csrf(c, "/settings")})
         r = c.post("/settings/2fa/confirm", data={"code": "１２３４５６", "csrf": csrf(c, "/settings")})
         assert r.status_code == 400
+
+
+def test_search_all_only_runs_set_up_sites(monkeypatch):
+    from jobpot import worker
+    ran = []
+
+    def fake_discover(db, user, acc):
+        ran.append(acc.site)
+        acc.last_error = "boom" if acc.site == "lever" else ""
+        return 2
+    monkeypatch.setattr(worker, "discover_site", fake_discover)
+    uid = make_user()
+    with SessionLocal() as db:
+        db.add_all([
+            SiteAccount(user_id=uid, site="greenhouse", enabled=True, options={"boards": "gitlab"}),
+            SiteAccount(user_id=uid, site="lever", enabled=True, options={"companies": "x"}),
+            SiteAccount(user_id=uid, site="ashby", enabled=True, options={"boards": " "}),       # not filled in
+            SiteAccount(user_id=uid, site="smartrecruiters", enabled=False, options={"companies": "x"}),  # off
+            SiteAccount(user_id=uid, site="linkedin", enabled=True, options={}),                 # location is optional
+            SiteAccount(user_id=uid, site="ziprecruiter", enabled=True, options={}),             # can't search
+        ])
+        db.commit()
+    with client() as c:
+        login(c)
+        page = c.post("/sites/search-all", data={"csrf": csrf(c, "/sites")}).text
+    assert ran == ["linkedin", "greenhouse", "lever"]
+    assert "Searched LinkedIn, Greenhouse: 4 new postings" in page and "Lever: boom" in page
+
+
+def test_search_all_with_nothing_set_up():
+    make_user()
+    with client() as c:
+        login(c)
+        assert "No site is set up" in c.post("/sites/search-all", data={"csrf": csrf(c, "/sites")}).text

@@ -16,14 +16,19 @@
   </div>
   <label class="check"><input type="checkbox" name="remote_only" value="1" {% if criteria.remote_only %}checked{% endif %}> Remote jobs only</label>
   <div class="row">
-    <label>Apply automatically when fit is at least <input type="number" name="min_fit" min="0" max="100" value="{{ criteria.min_fit }}"></label>
-    <label>Most applications per day <input type="number" name="max_per_day" min="0" max="100" value="{{ criteria.max_per_day }}"></label>
+    <label>Apply automatically when fit is at least <span class="hint">A score from 0 to 100. Jobs at or above it are applied to on sites where automatic applying is on. Lower ones wait on Applications for you to decide.</span><input type="number" name="min_fit" min="0" max="100" value="{{ criteria.min_fit }}"></label>
+    <label>Most applications per day <span class="hint">The limit across all sites, counted from midnight UTC, including jobs you mark as applied yourself. 0 turns automatic applying off.</span><input type="number" name="max_per_day" min="0" max="100" value="{{ criteria.max_per_day }}"></label>
   </div>
   <div class="actions"><button>Save criteria</button></div>
 </form>
 
 <h2>Sites</h2>
 {% if not user.automation_enabled %}<p class="note">Automation is off, so nothing runs in the background. You can still press <em>Search now</em>. Turn automation on in <a href="/settings">Settings</a>.</p>{% endif %}
+<form method="post" action="/sites/search-all" class="actions">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <button>Search all set-up sites now</button>
+</form>
+<p class="muted small">Searches every site that's switched on and has its boxes filled in, one after another, so it can take a minute. Sites that aren't set up yet are skipped. Save a site first for it to count.</p>
 {% for c in connectors %}
 {% set acc = accounts.get(c.key) %}
 <section class="site" id="site-{{ c.key }}">
