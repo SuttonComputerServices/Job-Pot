@@ -40,6 +40,8 @@ def test_exclude_and_filters():
     assert matching.filter_reason(crit(locations="austin"), post()) is None
     assert "below" in matching.filter_reason(crit(min_salary=120000), post(salary="$80,000 - $95,000"))
     assert matching.filter_reason(crit(min_salary=120000), post(salary="$110k-$150k")) is None
+    assert "below" in matching.filter_reason(crit(min_salary=300000), post(salary="$211.4K - $290.6K"))
+    assert matching.filter_reason(crit(min_salary=290000), post(salary="$211.4K - $290.6K")) is None
     assert matching.filter_reason(crit(min_salary=120000), post(salary="")) is None
 
 
@@ -90,6 +92,7 @@ def test_site_settings_encrypt_password_and_need_risk_ack(monkeypatch):
     with client() as c:
         login(c)
         page = c.get("/sites").text
+        assert all(s in page for s in ("Ashby", "SmartRecruiters", "Indeed", "Monster", "jobs.ashbyhq.com/"))
         assert "Fake site" in page and "Risky." in page
         c.post("/sites/fake", data={"enabled": "1", "auto_submit": "1", "login": "me@x.com", "password": "pw-secret-123", "csrf": csrf(c, "/sites")})
         with SessionLocal() as db:

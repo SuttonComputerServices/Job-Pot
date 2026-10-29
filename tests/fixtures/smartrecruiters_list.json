@@ -1,0 +1,223 @@
+{
+ "offset": 0,
+ "limit": 2,
+ "totalFound": 26,
+ "content": [
+  {
+   "id": "744000158291555",
+   "name": "Staff Software Engineer (Armis/Veza)",
+   "uuid": "30e18980-b885-4ca5-a42d-8ef5d5345a90",
+   "jobAdId": "680d6ecb-0bde-4eb9-925f-827440a66db3",
+   "defaultJobAd": true,
+   "refNumber": "JB0074451",
+   "company": {
+    "identifier": "ServiceNow",
+    "name": "ServiceNow"
+   },
+   "releasedDate": "2026-10-28T13:35:21.123Z",
+   "location": {
+    "city": "Tel Aviv-Yafo",
+    "region": "Tel Aviv District",
+    "country": "il",
+    "address": "HaSolelim Street 1",
+    "remote": false,
+    "hybrid": false,
+    "latitude": "32.0716077",
+    "longitude": "34.79610270000001",
+    "fullLocation": "Tel Aviv-Yafo, Tel Aviv District, Israel"
+   },
+   "industry": {
+    "id": "it_and_services",
+    "label": "Information Technology And Services"
+   },
+   "department": {
+    "id": "2294038",
+    "label": "Engineering, Infrastructure and Operations"
+   },
+   "function": {
+    "id": "engineering",
+    "label": "Engineering"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "not_applicable",
+    "label": "Not Applicable"
+   },
+   "customField": [
+    {
+     "fieldId": "60345fa28b4ba8595bef1863",
+     "fieldLabel": "Recruiting Team",
+     "valueId": "professional",
+     "valueLabel": "Professional"
+    },
+    {
+     "fieldId": "60345d5c5165a31b17288279",
+     "fieldLabel": "Region",
+     "valueId": "395ee3093de740ba9cb8b3d35cb67e2d",
+     "valueLabel": "EMEA - Europe, Middle East and Africa"
+    },
+    {
+     "fieldId": "6034601b43915a29a4b3389b",
+     "fieldLabel": "Job Location",
+     "valueId": "L_TLV007",
+     "valueLabel": "1 Ha'Solelim st, Tel Aviv, 6777508, Israel(L_TLV007)"
+    },
+    {
+     "fieldId": "60345e1a0b24a127cbdfa148",
+     "fieldLabel": "Employee Type",
+     "valueId": "0082f6cbe6154da19322cbab1f6aa5af",
+     "valueLabel": "Regular"
+    },
+    {
+     "fieldId": "5f63a78f1dae5c5c4e54ba2b",
+     "fieldLabel": "Department",
+     "valueId": "2294038",
+     "valueLabel": "Engineering, Infrastructure and Operations"
+    },
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "il",
+     "valueLabel": "Israel"
+    },
+    {
+     "fieldId": "5f63a78f1dae5c5c4e54ba2a",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "ServiceNow"
+    },
+    {
+     "fieldId": "603462175165a31b1728827d",
+     "fieldLabel": "Cost Center",
+     "valueId": "CC6037",
+     "valueLabel": "6037 Armis Engineering"
+    },
+    {
+     "fieldId": "618ed92b8f5e5f110e5bfb95",
+     "fieldLabel": "Work Persona",
+     "valueId": "e5efb1ea-f0e1-4bc5-94b6-d5072787c528",
+     "valueLabel": "Required in Office"
+    },
+    {
+     "fieldId": "690cc0e8c682c3dbadaa7d73",
+     "fieldLabel": "Job Posting Type",
+     "valueId": "professional",
+     "valueLabel": "Professional"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/ServiceNow/postings/744000158291555",
+   "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+   }
+  },
+  {
+   "id": "744000157146370",
+   "name": "Senior Staff Software Engineer, Agentic Systems - Moveworks",
+   "uuid": "e2f7e35a-3904-49f3-9889-d2c8895e22bd",
+   "jobAdId": "d3ff724d-da1d-4cb7-a89b-2ff4dee6898b",
+   "defaultJobAd": true,
+   "refNumber": "JB0076259",
+   "company": {
+    "identifier": "ServiceNow",
+    "name": "ServiceNow"
+   },
+   "releasedDate": "2026-10-22T14:10:40.767Z",
+   "location": {
+    "city": "Mountain View",
+    "region": "CALIFORNIA",
+    "country": "us",
+    "address": "1400 Terra Bella Avenue",
+    "postalCode": "94043",
+    "remote": false,
+    "hybrid": false,
+    "fullLocation": "Mountain View, CALIFORNIA, United States"
+   },
+   "industry": {
+    "id": "it_and_services",
+    "label": "Information Technology And Services"
+   },
+   "department": {},
+   "function": {
+    "id": "other",
+    "label": "Other"
+   },
+   "typeOfEmployment": {
+    "id": "permanent",
+    "label": "Full-time"
+   },
+   "experienceLevel": {
+    "id": "not_applicable",
+    "label": "Not Applicable"
+   },
+   "customField": [
+    {
+     "fieldId": "60345fa28b4ba8595bef1863",
+     "fieldLabel": "Recruiting Team",
+     "valueId": "professional",
+     "valueLabel": "Professional"
+    },
+    {
+     "fieldId": "60345d5c5165a31b17288279",
+     "fieldLabel": "Region",
+     "valueId": "722a833b93e4437798309f43c0d25990",
+     "valueLabel": "AMS - North America and Canada"
+    },
+    {
+     "fieldId": "6034601b43915a29a4b3389b",
+     "fieldLabel": "Job Location",
+     "valueId": "L_MTV001",
+     "valueLabel": "1400 Terra Bella Avenue, Mountain View, California, 94043, United States of America(L_MTV001)"
+    },
+    {
+     "fieldId": "60345e1a0b24a127cbdfa148",
+     "fieldLabel": "Employee Type",
+     "valueId": "0082f6cbe6154da19322cbab1f6aa5af",
+     "valueLabel": "Regular"
+    },
+    {
+     "fieldId": "COUNTRY",
+     "fieldLabel": "Country/Region",
+     "valueId": "us",
+     "valueLabel": "United States"
+    },
+    {
+     "fieldId": "5f63a78f1dae5c5c4e54ba2a",
+     "fieldLabel": "Brands",
+     "valueId": "default",
+     "valueLabel": "ServiceNow"
+    },
+    {
+     "fieldId": "603462175165a31b1728827d",
+     "fieldLabel": "Cost Center",
+     "valueId": "CC6751",
+     "valueLabel": "6751 MVW Engineering"
+    },
+    {
+     "fieldId": "618ed92b8f5e5f110e5bfb95",
+     "fieldLabel": "Work Persona",
+     "valueId": "e5efb1ea-f0e1-4bc5-94b6-d5072787c528",
+     "valueLabel": "Required in Office"
+    },
+    {
+     "fieldId": "690cc0e8c682c3dbadaa7d73",
+     "fieldLabel": "Job Posting Type",
+     "valueId": "professional",
+     "valueLabel": "Professional"
+    }
+   ],
+   "visibility": "PUBLIC",
+   "ref": "https://api.smartrecruiters.com/v1/companies/ServiceNow/postings/744000157146370",
+   "language": {
+    "code": "en",
+    "label": "English",
+    "labelNative": "English (US)"
+   }
+  }
+ ]
+}

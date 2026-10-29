@@ -1,0 +1,137 @@
+{
+ "id": "744000158291555",
+ "name": "Staff Software Engineer (Armis/Veza)",
+ "uuid": "30e18980-b885-4ca5-a42d-8ef5d5345a90",
+ "jobId": "304fd6f8-07d5-4ae4-bd52-ccad5f58c28d",
+ "jobAdId": "680d6ecb-0bde-4eb9-925f-827440a66db3",
+ "defaultJobAd": true,
+ "refNumber": "JB0074451",
+ "company": {
+  "name": "ServiceNow",
+  "identifier": "ServiceNow"
+ },
+ "location": {
+  "city": "Tel Aviv-Yafo",
+  "region": "Tel Aviv District",
+  "country": "il",
+  "address": "HaSolelim Street 1",
+  "remote": false,
+  "hybrid": false,
+  "latitude": "32.0716077",
+  "longitude": "34.79610270000001",
+  "fullLocation": "Tel Aviv-Yafo, Tel Aviv District, Israel"
+ },
+ "customField": [
+  {
+   "fieldId": "60345fa28b4ba8595bef1863",
+   "fieldLabel": "Recruiting Team",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  },
+  {
+   "fieldId": "60345e1a0b24a127cbdfa148",
+   "fieldLabel": "Employee Type",
+   "valueId": "0082f6cbe6154da19322cbab1f6aa5af",
+   "valueLabel": "Regular"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2b",
+   "fieldLabel": "Department",
+   "valueId": "2294038",
+   "valueLabel": "Engineering, Infrastructure and Operations"
+  },
+  {
+   "fieldId": "COUNTRY",
+   "fieldLabel": "Country/Region",
+   "valueId": "il",
+   "valueLabel": "Israel"
+  },
+  {
+   "fieldId": "5f63a78f1dae5c5c4e54ba2a",
+   "fieldLabel": "Brands",
+   "valueId": "default",
+   "valueLabel": "ServiceNow"
+  },
+  {
+   "fieldId": "60345d5c5165a31b17288279",
+   "fieldLabel": "Region",
+   "valueId": "395ee3093de740ba9cb8b3d35cb67e2d",
+   "valueLabel": "EMEA - Europe, Middle East and Africa"
+  },
+  {
+   "fieldId": "603462175165a31b1728827d",
+   "fieldLabel": "Cost Center",
+   "valueId": "CC6037",
+   "valueLabel": "6037 Armis Engineering"
+  },
+  {
+   "fieldId": "6034601b43915a29a4b3389b",
+   "fieldLabel": "Job Location",
+   "valueId": "L_TLV007",
+   "valueLabel": "1 Ha'Solelim st, Tel Aviv, 6777508, Israel(L_TLV007)"
+  },
+  {
+   "fieldId": "618ed92b8f5e5f110e5bfb95",
+   "fieldLabel": "Work Persona",
+   "valueId": "e5efb1ea-f0e1-4bc5-94b6-d5072787c528",
+   "valueLabel": "Required in Office"
+  },
+  {
+   "fieldId": "690cc0e8c682c3dbadaa7d73",
+   "fieldLabel": "Job Posting Type",
+   "valueId": "professional",
+   "valueLabel": "Professional"
+  }
+ ],
+ "releasedDate": "2026-10-28T13:35:21.123Z",
+ "postingUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000158291555-staff-software-engineer-armis-veza-",
+ "applyUrl": "https://jobs.smartrecruiters.com/ServiceNow/744000158291555-staff-software-engineer-armis-veza-?oga=true",
+ "referralUrl": "https://jobs.smartrecruiters.com/external-referrals/company/ServiceNow/publication/30e18980-b885-4ca5-a42d-8ef5d5345a90?dcr_ci=ServiceNow",
+ "jobAd": {
+  "sections": {
+   "companyDescription": {
+    "title": "Company Description",
+    "text": "<p>It all started when engineer Fred Luddy wrote code that automated a tedious task for his coworker, Phyllis. She cried tears of joy. That moment inspired Fred to build a company that could do that for everyone\u2014freeing people from busywork so they could focus on meaningful work. Today, ServiceNow is the AI control tower for business reinvention. Our ServiceNow AI platform brings together any AI, any data, and any workflow\u2014 helping 85% of the Fortune 500\u00ae work smarter, faster, and better. We're building an AI-native culture where technology and talent are unstoppable together. And we're just getting started.</p><p>Join us to put AI to work for people.</p>"
+   },
+   "jobDescription": {
+    "title": "Job Description",
+    "text": "<p>Armis from ServiceNow, protects the entire attack surface and manages an organization\u2019s cyber risk exposure in real time. Combined with ServiceNow\u2019s Security and Risk capabilities, as well as Identity Security capabilities from Veza, we bring together all critical capabilities to secure every asset, every identity - incl. AI Agents - across all environments with the right level of context - security, operational and business - to build the first of its kind autonomous defense platform for the Agentic Enterprise.</p><p>We are looking for a Software Engineer to join the evolution of our Exposure Management core. You will be responsible for the high-throughput architecture that ingests and correlates data from hundreds of integrations and data sources. Your mission is to transform billions of raw data points into a unified asset inventory and an intelligent engine for security risk prioritization and remediation.<br>\nOur stack: Python, AWS, FastAPI, ECS, Celery</p><p>Responsibilities</p><ul><li>Design and build an infrastructure to correlate multiple data sources and matching methods</li><li>Research and develop algorithms for asset discovery , and solve complicated identification issues</li><li>Develop extendable libraries and utilities which will speed-up our implementations and make sure we\u2019re building scalable and high-quality solutions</li><li>Work closely with product and other R&amp;D teams</li><li>Help with solving complex customer issues with our solutions and platform</li></ul>"
+   },
+   "qualifications": {
+    "title": "Qualifications",
+    "text": "<ul><li>7+ years of experience in a backend-heavy role using Python/GO/C++/Java</li><li>Proven track record of developing and maintaining production-grade, enterprise-level distributed systems</li><li>Experience in system architecture and the ability to find creative, elegant solutions to complex problems</li><li>Deep understanding of performance optimization and concurrency in high-scale, data-intensive environments</li><li>Analytical mindset and a data-driven approach for problem-solving</li><li>The mentality of a team player, excellent communication skills and a strong sense of ownership and urgency</li><li>BS degree in Computer Science, Information Technology or equivalent</li></ul>"
+   },
+   "additionalInformation": {
+    "title": "Additional Information",
+    "text": "<p><strong>Work Personas</strong></p><p>We approach our distributed world of work with flexibility and trust. Work personas (flexible, remote, or required in office) are categories that are assigned to ServiceNow employees depending on the nature of their work and their assigned work location. <a href=\"https://careers.servicenow.com/life-at-servicenow#workpersonas\" rel=\"noopener noreferrer\"><u>Learn more here</u></a>. To determine eligibility for a work persona, ServiceNow may confirm the distance between your primary residence and the closest ServiceNow office using a third-party service.</p><p><strong>Equal Opportunity Employer</strong></p><p>ServiceNow is an equal opportunity employer. All qualified applicants will receive consideration for employment without regard to race, color, religion, sex, sexual orientation, national origin, age, disability, gender identity,&#xa0; veteran status, or any other category protected by law. In addition, all qualified applicants with arrest or conviction records will be considered for employment in accordance with legal requirements.\u202f&#xa0;</p><p><strong>Accommodations</strong></p><p>We strive to create an accessible and inclusive experience for all candidates. If you require a reasonable accommodation to complete any part of the application process, or are unable to use this online application and need an alternative method to apply, please contact <a href=\"mailto:globaltalentss@servicenow.com\" rel=\"noopener noreferrer\">globaltalentss@servicenow.com </a>for assistance.&#xa0;</p><p><strong>Export Control Regulations</strong></p><p>For positions requiring access to controlled technology subject to export control regulations, including the U.S. Export Administration Regulations (EAR), ServiceNow may be required to obtain export control approval from government authorities for certain individuals. All employment is contingent upon ServiceNow obtaining any export license or other approval that may be required by relevant export control authorities.&#xa0;</p><p>From Fortune. \u00a92026 Fortune Media IP Limited. All rights reserved. Used under license.</p>"
+   }
+  }
+ },
+ "active": true,
+ "visibility": "PUBLIC",
+ "industry": {
+  "id": "it_and_services",
+  "label": "Information Technology And Services"
+ },
+ "function": {
+  "id": "engineering",
+  "label": "Engineering"
+ },
+ "department": {
+  "id": 2294038,
+  "label": "Engineering, Infrastructure and Operations"
+ },
+ "experienceLevel": {
+  "id": "not_applicable",
+  "label": "Not Applicable"
+ },
+ "typeOfEmployment": {
+  "id": "permanent",
+  "label": "Full-time"
+ },
+ "language": {
+  "code": "en",
+  "label": "English",
+  "labelNative": "English (US)"
+ }
+}

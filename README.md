@@ -30,7 +30,9 @@ It runs on your own server in Docker, keeps everything in one database there, su
 | **LinkedIn** | Yes, Easy Apply jobs, through LinkedIn's public job search | Yes, Easy Apply, in a headless browser signed in with your account | LinkedIn's user agreement forbids automated tools and can restrict accounts. Off until you tick an acknowledgement. **The applying part has not been tested against a real LinkedIn account yet.** |
 | **Greenhouse** | Yes, from company job boards you list (public API) | Yes, fills the employer's form | Fills name, email, phone, location, LinkedIn and resume. If the form asks anything else or shows a captcha, the job is marked *Needs you*. Most real forms have extra questions. |
 | **Lever** | Yes, from companies you list (public API) | Yes, same approach as Greenhouse | Same as Greenhouse. |
-| **ZipRecruiter** | No | No | ZipRecruiter blocks automated visitors. Add ZipRecruiter jobs by hand to score them and track replies. |
+| **Ashby** | Yes, from companies you list (public API) | Yes, same approach as Greenhouse | Fills name, email, phone, LinkedIn, GitHub, website and resume. Dry-run tested on real forms; a real submit has not been tried yet. |
+| **SmartRecruiters** | Yes, from companies you list (public API) | No | Its application form runs over several steps Job Pot can't fill yet. Open the job to apply. Reads at most 60 full postings per company each run. |
+| **ZipRecruiter**, **Indeed**, **Monster** | No | No | These sites block automated visitors (tested: Cloudflare or captcha pages, even for a real browser). Add their jobs by hand to score them and track replies. |
 | **Any other site** | Add by hand | No | Paste the title, company, link and description. |
 
 Job Pot never retries a job that might already have been sent: if it presses submit and can't see a confirmation, the job is marked *Needs you* so you can check.
@@ -132,7 +134,7 @@ The database tables are created automatically; there are no migrations yet (see 
 
 1. **Profile**: fill in your name, email, phone, location and links. These go into applications.
 2. **Resume**: upload your resume and fix what the suggestions point out. Scanned PDFs have no text, so paste the text instead.
-3. **Job sites**: set your criteria, then turn on the sites you want. For Greenhouse and Lever, list company board names (the part after `boards.greenhouse.io/` or `jobs.lever.co/`). For LinkedIn, enter a search location and your sign-in.
+3. **Job sites**: set your criteria, then turn on the sites you want. For Greenhouse, Lever, Ashby and SmartRecruiters, list company names (the part after `boards.greenhouse.io/`, `jobs.lever.co/`, `jobs.ashbyhq.com/` or `jobs.smartrecruiters.com/`). For LinkedIn, enter a search location and your sign-in.
 4. Press **Search now** on a site to see results right away on **Applications**.
 5. **Mailbox**: connect a separate address used only for job hunting. Gmail and Fastmail need an app password.
 6. **Settings → Automation**: turn it on to search, apply and check mail every 15 minutes.
@@ -189,8 +191,8 @@ A new job site is a `Connector` subclass in `jobpot/connectors/` with `discover(
 ## Limitations
 
 - **LinkedIn applying is untested** against a real account. LinkedIn changes its pages often and may ask for security checks; when it does, jobs are marked *Needs you*.
-- **Custom application questions aren't answered.** Greenhouse and Lever forms with extra questions stop at *Needs you*.
-- **ZipRecruiter** can only be tracked by hand.
+- **Custom application questions aren't answered.** Greenhouse, Lever and Ashby forms with extra questions stop at *Needs you*.
+- **ZipRecruiter, Indeed and Monster** can only be tracked by hand.
 - **Mail** uses IMAP and SMTP with a password. Accounts that only allow OAuth sign-in (some Microsoft accounts) won't connect.
 - **No database migrations yet.** Adding columns in a future version will need a migration tool (such as Alembic).
 - The sign-in lockout is kept in memory, so it resets when the web container restarts.

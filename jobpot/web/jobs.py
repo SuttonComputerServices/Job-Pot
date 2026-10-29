@@ -15,7 +15,8 @@ from .deps import current_user, flash, redirect, render
 
 router = APIRouter()
 STATUSES = {"found": "Found", "submitted": "Applied", "needs_manual": "Needs you", "failed": "Failed", "skipped": "Skipped"}
-MANUAL_SITES = {"manual": "Other site", "ziprecruiter": "ZipRecruiter", "linkedin": "LinkedIn", "indeed": "Indeed"}
+MANUAL_SITES = {"manual": "Other site", "ziprecruiter": "ZipRecruiter", "linkedin": "LinkedIn", "indeed": "Indeed",
+                "monster": "Monster"}
 
 
 def criteria_for(db, user) -> Criteria:

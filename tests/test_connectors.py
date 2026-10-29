@@ -5,7 +5,7 @@ from types import SimpleNamespace as NS
 import httpx
 import pytest
 
-from jobpot.connectors import browser, greenhouse, lever, linkedin
+from jobpot.connectors import ashby, browser, greenhouse, lever, linkedin, smartrecruiters
 from jobpot.connectors.registry import REGISTRY
 
 FIX = Path(__file__).parent / "fixtures"
@@ -38,10 +38,12 @@ def fake_get(routes, calls=None):
 
 
 def test_registry_order_and_flags():
-    assert list(REGISTRY) == ["linkedin", "greenhouse", "lever", "ziprecruiter"]
-    z = REGISTRY["ziprecruiter"]
-    assert not z.can_discover and not z.can_apply and "blocks automated" in z.risk_note
-    assert z.discover(None, None, None) == []
+    assert list(REGISTRY) == ["linkedin", "greenhouse", "lever", "ashby", "smartrecruiters", "ziprecruiter", "indeed", "monster"]
+    for key in ("ziprecruiter", "indeed", "monster"):
+        z = REGISTRY[key]
+        assert not z.can_discover and not z.can_apply and "blocks automated" in z.risk_note
+        assert z.discover(None, None, None) == []
+    assert REGISTRY["smartrecruiters"].can_discover and not REGISTRY["smartrecruiters"].can_apply
     assert REGISTRY["linkedin"].needs_login and [o.name for o in REGISTRY["linkedin"].options] == ["location"]
 
 
@@ -195,3 +197,52 @@ def test_prefilter_matches_whole_words():
     a = JobPosting("1", "Engineer", "X", "", "", "Builds REST APIs")
     b = JobPosting("2", "Engineer", "X", "", "", "Shows interest in people")
     assert browser.relevant([a, b], crit) == [a]
+
+
+def test_ashby_parse_fixture():
+    jobs = ashby.parse_board(json.loads((FIX / "ashby_board.json").read_text()), "ramp")
+    assert [j.title for j in jobs] == ["Security Engineer, Cloud", "Mobile Engineer, Android", "Senior / Staff Fullstack Engineer"]
+    a, _, c = jobs
+    assert a.salary == "$211.4K - $290.6K" and a.location == "New York, NY (HQ) (Remote)"
+    assert a.url.startswith("https://jobs.ashbyhq.com/ramp/") and len(a.description) > 200
+    assert c.salary == "" and c.location == "Europe (Remote)"
+
+
+def test_ashby_discover(monkeypatch):
+    calls = []
+    monkeypatch.setattr(browser, "get", fake_get({"/job-board/ramp": (FIX / "ashby_board.json").read_text(), "/job-board/nope": 404}, calls))
+    found = ashby.ASHBY.discover(NS(options={"boards": "ramp"}), crit(titles="android"), None)
+    assert [p.title for p in found] == ["Mobile Engineer, Android"]
+    assert calls[0][1] == {"includeCompensation": "true"}
+    with pytest.raises(ValueError, match="wasn't found"):
+        ashby.ASHBY.discover(NS(options={"boards": "nope"}), None, None)
+    with pytest.raises(ValueError):
+        ashby.ASHBY.discover(NS(options={"boards": "a/b"}), None, None)
+
+
+def test_ashby_apply_rejects_foreign_url():
+    assert ashby.ASHBY.apply(NS(options={}), NS(url="https://evil.example/job"), None, None).status == "failed"
+
+
+def test_smartrecruiters_parse_fixture():
+    p = smartrecruiters.parse_posting(json.loads((FIX / "smartrecruiters_posting.json").read_text()), "ServiceNow")
+    assert p.title == "Staff Software Engineer (Armis/Veza)" and p.company == "ServiceNow"
+    assert p.location == "Tel Aviv-Yafo, Tel Aviv District, Israel"
+    assert p.url.startswith("https://jobs.smartrecruiters.com/ServiceNow/744000158291555")
+    assert "<" not in p.description and len(p.description) > 500
+
+
+def test_smartrecruiters_discover(monkeypatch):
+    calls = []
+    detail = (FIX / "smartrecruiters_posting.json").read_text()
+    other = json.dumps({**json.loads(detail), "id": "744000157146370", "name": "Office Manager", "jobAd": {}})
+    monkeypatch.setattr(browser, "get", fake_get({
+        "/postings/744000158291555": detail, "/postings/744000157146370": other,
+        "/servicenow/postings": (FIX / "smartrecruiters_list.json").read_text(),
+        "/nope/postings": json.dumps({"totalFound": 0, "content": []}),
+    }, calls))
+    found = smartrecruiters.SMARTRECRUITERS.discover(NS(options={"companies": "ServiceNow"}), crit(titles="software engineer"), None)
+    assert [p.title for p in found] == ["Staff Software Engineer (Armis/Veza)"]
+    assert calls[0][1] == {"limit": 100, "q": "software engineer"}
+    with pytest.raises(ValueError, match="name is wrong"):
+        smartrecruiters.SMARTRECRUITERS.discover(NS(options={"companies": "nope"}), None, None)
