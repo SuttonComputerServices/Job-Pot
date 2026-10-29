@@ -1,5 +1,7 @@
+import hashlib
 import hmac
 import os
+import re
 import secrets
 import threading
 import time
@@ -10,11 +12,15 @@ from fastapi import HTTPException
 from sqlalchemy import func, select
 
 from .config import DATA_DIR
-from .models import User
+from .models import PasswordReset, User
 
 _ph = PasswordHasher()
 SETUP_TOKEN = DATA_DIR / "setup-token"
 MIN_PASSWORD = 12
+RESET_SECONDS = 30 * 60
+USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
+USERNAME_RULE = "Usernames are 3–64 characters: letters, numbers, dots, dashes and underscores."
+EMAIL_RE = re.compile(r"^[^@\s]{1,64}@[^@\s]{1,190}\.[^@\s]{2,}$")
 
 
 def hash_password(password: str) -> str:
@@ -48,6 +54,23 @@ def get_owned(db, model, obj_id, user):
 
 def find_user(db, username: str) -> User | None:
     return db.scalar(select(User).where(func.lower(User.username) == username.strip().lower()))
+
+
+def _token_hash(token: str) -> str:
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+def new_reset_token(db, user: User) -> str:
+    """Replaces any earlier link for this user. Caller commits."""
+    db.query(PasswordReset).filter(PasswordReset.user_id == user.id).delete()
+    token = secrets.token_urlsafe(32)
+    db.add(PasswordReset(user_id=user.id, token_hash=_token_hash(token), expires_at=int(time.time()) + RESET_SECONDS))
+    return token
+
+
+def reset_token_user(db, token: str) -> User | None:
+    row = db.scalar(select(PasswordReset).where(PasswordReset.token_hash == _token_hash(token)))
+    return db.get(User, row.user_id) if row and row.expires_at > time.time() else None
 
 
 def ensure_admin(db) -> str | None:
@@ -96,3 +119,5 @@ class Throttle:
 
 
 login_throttle = Throttle()
+signup_throttle = Throttle(limit=10, window=3600)  # per client address: every attempt counts
+reset_mail_throttle = Throttle(limit=3, window=3600)  # per account: stops someone flooding a person's inbox

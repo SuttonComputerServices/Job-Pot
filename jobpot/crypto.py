@@ -39,6 +39,9 @@ def _fernet(user_id: int) -> Fernet:
     return Fernet(base64.urlsafe_b64encode(derive(f"user:{user_id}")))
 
 
+APP_ID = 0  # key slot for app-wide secrets (the admin's outgoing mail); no user has id 0
+
+
 def encrypt(user_id: int, plaintext: str) -> str:
     return _fernet(user_id).encrypt(plaintext.encode()).decode()
 

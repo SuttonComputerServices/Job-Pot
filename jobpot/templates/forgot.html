@@ -1,0 +1,20 @@
+{% extends "_narrow.html" %}
+{% block title %}Forgot password{% endblock %}
+{% block content %}
+<h1>Forgot your password?</h1>
+{% if sent %}
+<p class="note" role="status">If an account matches and has an email address, a reset link is on its way. It works for 30 minutes. Check your spam folder if it doesn't arrive.</p>
+<p><a href="/login">Back to sign in</a></p>
+{% elif mail_ready %}
+<p>Enter your username or the email address on your profile. We'll email you a link to choose a new password.</p>
+<form method="post" action="/forgot" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Username or email <input name="who" required maxlength="200" autocomplete="username" autofocus></label>
+  <div class="actions"><button>Email me a link</button><a href="/login">Back to sign in</a></div>
+</form>
+{% else %}
+<p>This Job Pot can't send email yet, so ask the person who runs it to reset your password from the Administration page.</p>
+<p class="muted small">Running it yourself? The administrator can set up outgoing email on the Administration page. If you've lost the admin password, see "Forgot the admin password" in the README.</p>
+<p><a href="/login">Back to sign in</a></p>
+{% endif %}
+{% endblock %}

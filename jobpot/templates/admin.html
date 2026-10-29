@@ -45,6 +45,32 @@
   <div class="actions"><button>Create account</button></div>
 </form>
 
+<h2 id="signup">Sign-ups</h2>
+<p>When on, the sign-in page shows "Create an account" and anyone who can reach this Job Pot can make their own account. Leave it off if Job Pot is reachable from the internet and you only want people you add yourself.</p>
+<form method="post" action="/admin/signup" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label class="check"><input type="checkbox" name="enabled" value="1" {% if signup_enabled %}checked{% endif %}> Allow new people to sign up</label>
+  <div class="actions"><button>Save sign-up setting</button></div>
+</form>
+
+<h2 id="mail">Outgoing email</h2>
+<p>Used only to send "Forgot your password?" links. Until this is filled in, people who forget their password have to ask you to reset it above. Use an account made for this, for example an app password on a spare email address.</p>
+<form method="post" action="/admin/mail" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <div class="row">
+    <label>Mail server (SMTP) <input name="host" value="{{ smtp.host }}" placeholder="smtp.example.com" autocomplete="off"></label>
+    <label>Port <span class="hint">587 with the box below ticked, or 465 without.</span><input type="number" name="port" min="1" max="65535" value="{{ smtp.port }}"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="starttls" value="1" {% if smtp.starttls %}checked{% endif %}> Server uses STARTTLS (usually port 587)</label>
+  <div class="row">
+    <label>Sender address <input type="email" name="sender" value="{{ smtp.from }}" placeholder="jobpot@example.com" autocomplete="off"></label>
+    <label>Sign-in name <span class="hint">Leave empty to use the sender address.</span><input name="login" value="{{ smtp.login }}" autocomplete="off"></label>
+  </div>
+  <label>Password <span class="hint">{{ "Saved and encrypted. Leave empty to keep it." if smtp.saved else "Stored encrypted." }}</span><input type="password" name="password" autocomplete="new-password"></label>
+  <label>Job Pot address <span class="hint">The address people use to open Job Pot. Reset links start with it.</span><input type="url" name="public_url" value="{{ smtp.public_url }}" placeholder="https://jobs.example.com"></label>
+  <div class="actions"><button name="action" value="save">Save outgoing email</button><button class="quiet" name="action" value="test">Save and send me a test</button></div>
+</form>
+
 <h2 id="ai">Local AI (Ollama)</h2>
 <p>When on, Job Pot uses your own Ollama model to explain fit scores, review resumes, sort employer emails and draft replies. Nothing leaves this server. When off or unreachable, it falls back to built-in rules.</p>
 <form method="post" action="/admin/ai" class="stack">

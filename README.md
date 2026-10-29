@@ -73,6 +73,22 @@ There is **no default admin password**. On the first visit:
 
 The token stops anyone who reaches a fresh install before you from claiming it. It is deleted once the password is set.
 
+### Accounts, sign-ups and forgotten passwords
+
+- **Adding people.** By default only the admin creates accounts (**Administration → Add an account**). To let people make their own, tick **Allow new people to sign up** on the Administration page; the sign-in page then shows **Create an account**. Sign-up asks for a username, an email address and a password. Leave sign-ups off if Job Pot is reachable from the internet.
+- **Forgot your password?** works once the admin fills in **Administration → Outgoing email** (an SMTP account, ideally a spare address with an app password, plus the address people use to open Job Pot). Use **Save and send me a test** to check it; the test goes to the email on the admin's Profile. A reset link is emailed to the address on the person's profile, works once, for 30 minutes, and signs out their other sessions. If two-step sign-in is on, the reset also asks for an authenticator code. Each account gets at most 3 reset emails an hour.
+- Without outgoing email, the forgot-password page tells people to ask the admin, who can set a temporary password from **Administration**.
+
+#### Forgot the admin password
+
+If the admin has an email on their profile and outgoing email is set up, use **Forgot your password?** like anyone else. Otherwise, on the server, clear the admin password and restart; Job Pot goes back to first-run setup with a new token in the log (two-step sign-in is turned off too):
+
+```sh
+docker compose exec web python -c "from jobpot.db import SessionLocal; from jobpot.models import User; db = SessionLocal(); a = db.query(User).filter(User.is_admin).order_by(User.id).first(); a.password_hash = None; a.totp_enabled = False; a.totp_secret_enc = None; db.commit()"
+docker compose restart web
+docker compose logs web | grep "Setup token"
+```
+
 ### Optional: local AI with Ollama
 
 ```sh
@@ -142,6 +158,7 @@ The database tables are created automatically; there are no migrations yet (see 
 ## Security
 
 - **No default credentials.** The admin password is set on first sign-in, protected by a one-time token printed only to the server log.
+- **Password reset links** are random 256-bit tokens; only their SHA-256 hash is stored. They expire after 30 minutes, work once, and are built from the saved Job Pot address, never the request's Host header. The forgot-password page gives the same answer whether or not an account exists, and sends the email after replying so timing doesn't tell either. Sign-ups are off by default and limited to 10 attempts an hour per address.
 - **Passwords** are hashed with Argon2id. Sign-in locks for five minutes after five wrong attempts for a username from the same address, so a stranger can't lock you out. Changing a password signs out your other sessions.
 - **Two-step sign-in** with any TOTP authenticator app; a code can't be used twice.
 - **Saved site and mailbox passwords and two-step secrets are encrypted** with a key unique to each account (HKDF from the master key, Fernet). A copied row can't be decrypted with another account's key.

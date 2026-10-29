@@ -1,0 +1,13 @@
+{% extends "_narrow.html" %}
+{% block title %}Create an account{% endblock %}
+{% block content %}
+<h1>Create an account</h1>
+<form method="post" action="/signup" class="stack">
+  <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
+  <label>Username <span class="hint">You sign in with this. Letters, numbers, dots, dashes and underscores.</span><input name="username" required minlength="3" maxlength="64" pattern="[A-Za-z0-9._\-]+" autocomplete="username" value="{{ username or '' }}" autofocus></label>
+  <label>Email <span class="hint">Only used to send you a link if you forget your password.</span><input type="email" name="email" required maxlength="200" autocomplete="email" value="{{ email or '' }}"></label>
+  <label>Password <span class="hint">At least 12 characters.</span><input type="password" name="password" minlength="12" required autocomplete="new-password"></label>
+  <label>Repeat password <input type="password" name="confirm" minlength="12" required autocomplete="new-password"></label>
+  <div class="actions"><button>Create account</button><a href="/login">I already have an account</a></div>
+</form>
+{% endblock %}

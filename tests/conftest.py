@@ -8,7 +8,7 @@ os.environ.pop("DATABASE_URL", None)
 import pytest  # noqa: E402
 
 from jobpot.db import Base, SessionLocal, engine, init_db  # noqa: E402
-from jobpot.security import SETUP_TOKEN  # noqa: E402
+from jobpot.security import SETUP_TOKEN, login_throttle, reset_mail_throttle, signup_throttle  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
@@ -17,6 +17,8 @@ def fresh_db():
     yield
     Base.metadata.drop_all(engine)
     SETUP_TOKEN.unlink(missing_ok=True)
+    for t in (login_throttle, signup_throttle, reset_mail_throttle):
+        t.fails.clear()
 
 
 @pytest.fixture

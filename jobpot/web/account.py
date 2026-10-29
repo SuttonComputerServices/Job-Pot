@@ -6,16 +6,14 @@ import segno
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from markupsafe import Markup
 
-from .. import ai, crypto
+from .. import ai, crypto, mail
 from ..db import get_db
 from ..models import User
-from ..security import find_user, hash_password, password_problem, verify_password
+from ..security import EMAIL_RE, USERNAME_RE, USERNAME_RULE, find_user, hash_password, password_problem, verify_password
 from .auth import totp_ok
 from .deps import admin_user, current_user, flash, login_session, redirect, render
 
 router = APIRouter()
-USERNAME_RE = re.compile(r"^[A-Za-z0-9._-]{3,64}$")
-USERNAME_RULE = "Usernames are 3–64 characters: letters, numbers, dots, dashes and underscores."
 
 
 def _qr(user: User) -> Markup | None:
@@ -141,8 +139,59 @@ def twofa_disable(request: Request, password: str = Form(...), code: str = Form(
 @router.get("/admin")
 def admin(request: Request, user=Depends(admin_user), db=Depends(get_db)):
     enabled, url, model = ai.config(db)
+    get = lambda k, d="": ai.get_setting(db, k, d)
+    smtp = {k: get(f"smtp_{k}") for k in ("host", "login", "from")}
+    smtp.update(port=get("smtp_port", "587"), starttls=get("smtp_starttls", "1") == "1", saved=bool(get("smtp_password_enc")),
+                public_url=get("public_url") or str(request.base_url).rstrip("/"))
     return render(request, "admin.html", user, users=db.query(User).order_by(User.id).all(),
-                  ai_enabled=enabled, ollama_url=url, ollama_model=model, models=request.session.pop("ai_models", None))
+                  ai_enabled=enabled, ollama_url=url, ollama_model=model, models=request.session.pop("ai_models", None),
+                  signup_enabled=get("signup_enabled") == "1", smtp=smtp)
+
+
+@router.post("/admin/signup")
+def admin_signup(request: Request, enabled: str = Form(""), user=Depends(admin_user), db=Depends(get_db)):
+    ai.set_setting(db, "signup_enabled", "1" if enabled == "1" else "0")
+    db.commit()
+    flash(request, "Anyone who can reach the sign-in page can now create an account." if enabled == "1"
+          else "Sign-ups are off. Only you can add accounts.")
+    return redirect("/admin#signup")
+
+
+@router.post("/admin/mail")
+def admin_mail(request: Request, host: str = Form(""), port: int = Form(587), starttls: str = Form(""),
+               login: str = Form(""), password: str = Form(""), sender: str = Form(""), public_url: str = Form(""),
+               action: str = Form("save"), user=Depends(admin_user), db=Depends(get_db)):
+    host, sender, public_url = host.strip(), sender.strip(), public_url.strip().rstrip("/")
+    if host and not re.match(r"^[A-Za-z0-9.-]{1,200}$", host):
+        flash(request, "The mail server should be a host name like smtp.example.com.", "problem")
+    elif not 0 < port < 65536:
+        flash(request, "The port must be a number between 1 and 65535.", "problem")
+    elif sender and not EMAIL_RE.match(sender):
+        flash(request, "The sender address doesn't look like an email address.", "problem")
+    elif public_url and not re.match(r"^https?://[^\s/]+(:\d+)?(/\S*)?$", public_url):
+        flash(request, "The Job Pot address must start with http:// or https://", "problem")
+    else:
+        for k, v in (("host", host), ("port", str(port)), ("starttls", "1" if starttls == "1" else "0"),
+                     ("login", login.strip()[:200]), ("from", sender)):
+            ai.set_setting(db, f"smtp_{k}", v)
+        ai.set_setting(db, "public_url", public_url)
+        if password:
+            ai.set_setting(db, "smtp_password_enc", crypto.encrypt(crypto.APP_ID, password))
+        db.commit()
+        if action != "test":
+            flash(request, "Outgoing email saved.")
+        elif not EMAIL_RE.match(user.email or ""):
+            flash(request, "Add your own email address on the Profile page first; the test email goes there.", "problem")
+        elif (sender_box := mail.system_mailbox(db)) is None:
+            flash(request, "Fill in the server, sender, password and Job Pot address first.", "problem")
+        else:
+            try:
+                mail.send_notice(*sender_box, user.email, "Job Pot test email",
+                                 "Outgoing email works. Password reset links will be sent from this address.")
+                flash(request, f"Test email sent to {user.email}.")
+            except ValueError as e:
+                flash(request, str(e), "problem")
+    return redirect("/admin#mail")
 
 
 @router.post("/admin/users")

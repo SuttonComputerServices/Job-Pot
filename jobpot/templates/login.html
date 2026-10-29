@@ -6,7 +6,8 @@
   <input type="hidden" name="csrf" value="{{ csrf_token(request) }}">
   <label>Username <input name="username" autocomplete="username" required value="{{ username or '' }}" autofocus></label>
   <label>Password <input type="password" name="password" autocomplete="current-password"></label>
-  <div class="actions"><button>Sign in</button></div>
+  <div class="actions"><button>Sign in</button><a href="/forgot">Forgot your password?</a></div>
 </form>
+{% if signup %}<p class="gap-top">New here? <a href="/signup">Create an account</a></p>{% endif %}
 <p class="muted small gap-top">First time on a new install? Sign in as <strong>admin</strong> with no password to set one up.</p>
 {% endblock %}

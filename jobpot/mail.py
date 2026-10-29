@@ -75,6 +75,17 @@ def _smtp(mb: Mailbox, password: str):
     return s
 
 
+def _send(mb: Mailbox, password: str, msg: EmailMessage):
+    s = _smtp(mb, password)
+    try:
+        s.send_message(msg)
+    finally:
+        try:
+            s.quit()
+        except MAIL_ERRORS:
+            pass
+
+
 def _why(e: Exception) -> str:
     if isinstance(e, crypto.InvalidToken):
         return "the saved password can't be read, so enter it again"
@@ -339,15 +350,39 @@ def send_reply(db, user, response: Response, body: str) -> None:
     msg["Date"] = formatdate(localtime=True)
     msg.set_content(body)
     try:
-        s = _smtp(mb, crypto.decrypt(user.id, mb.password_enc))
-        try:
-            s.send_message(msg)
-        finally:
-            try:
-                s.quit()
-            except MAIL_ERRORS:
-                pass
+        _send(mb, crypto.decrypt(user.id, mb.password_enc), msg)
     except MAIL_ERRORS as e:
         raise ValueError(f"The reply wasn't sent: {_why(e)}. Check the outgoing mail settings on the Mailbox page and try again.") from None
     db.add(Reply(user_id=user.id, response_id=response.id, body=body))
     db.commit()
+
+
+# ---------- the admin's outgoing account, for password-reset emails ----------
+
+def system_mailbox(db) -> tuple[Mailbox, str] | None:
+    """An unsaved Mailbox built from the Admin page settings, plus its password. None until fully set up."""
+    get = lambda k, d="": ai.get_setting(db, k, d)
+    if not (get("smtp_host") and get("smtp_from") and get("smtp_password_enc") and get("public_url")):
+        return None
+    try:
+        password = crypto.decrypt(crypto.APP_ID, get("smtp_password_enc"))
+    except crypto.InvalidToken:
+        return None
+    mb = Mailbox(address=get("smtp_from"), smtp_host=get("smtp_host"), smtp_port=int(get("smtp_port", "587")),
+                 smtp_starttls=get("smtp_starttls", "1") == "1", login=get("smtp_login"))
+    return mb, password
+
+
+def send_notice(mb: Mailbox, password: str, to: str, subject: str, body: str) -> None:
+    """Raises ValueError with a readable reason."""
+    msg = EmailMessage()
+    msg["From"] = formataddr(("Job Pot", mb.address))
+    msg["To"] = to
+    msg["Subject"] = subject
+    msg["Message-ID"] = make_msgid(domain=mb.address.rpartition("@")[2])
+    msg["Date"] = formatdate(localtime=True)
+    msg.set_content(body)
+    try:
+        _send(mb, password, msg)
+    except MAIL_ERRORS as e:
+        raise ValueError(f"The email wasn't sent: {_why(e)}.") from None
