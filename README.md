@@ -198,4 +198,4 @@ A new job site is a `Connector` subclass in `jobpot/connectors/` with `discover(
 
 ## Licence
 
-No licence has been chosen yet. The bundled typeface, Atkinson Hyperlegible Next, is used under the SIL Open Font License (`jobpot/static/OFL-atkinson.txt`).
+MIT — see [LICENSE](LICENSE). The bundled typeface, Atkinson Hyperlegible Next, is used under the SIL Open Font License (`jobpot/static/OFL-atkinson.txt`).
