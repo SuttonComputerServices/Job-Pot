@@ -1,7 +1,6 @@
 import re
 
 from . import browser
-from ..matching import split_list
 from .base import Connector, JobPosting, Option
 
 NAME = re.compile(r"^[A-Za-z0-9_-]+$")
@@ -11,12 +10,12 @@ MAX_DETAILS = 60
 
 
 def companies(account) -> list[str]:
-    names = split_list((account.options or {}).get("companies", ""))
+    names = browser.board_names((account.options or {}).get("companies", ""), "smartrecruiters.com")
     if not names:
         raise ValueError("Add at least one company name, for example: ServiceNow")
     for n in names:
         if not NAME.match(n):
-            raise ValueError(f"'{n}' isn't a company name. Use only the part after jobs.smartrecruiters.com/, for example: ServiceNow")
+            raise ValueError(f"'{n}' isn't a company name. Use the part after jobs.smartrecruiters.com/ (for example: ServiceNow), or paste a job link")
     return names
 
 
@@ -57,5 +56,5 @@ class SmartRecruiters(Connector):
 SMARTRECRUITERS = SmartRecruiters(
     key="smartrecruiters", label="SmartRecruiters",
     options=[Option("companies", "Company names",
-                    "The part after jobs.smartrecruiters.com/ — for example: ServiceNow. Comma separated.")],
+                    "The part after jobs.smartrecruiters.com/, for example: ServiceNow. Comma separated. You can also paste a job link.")],
 )

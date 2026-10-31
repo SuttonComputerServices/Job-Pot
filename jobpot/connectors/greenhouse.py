@@ -17,12 +17,12 @@ DONE = r"thank you for applying|application (has been |was )?(submitted|received
 
 
 def board_tokens(account) -> list[str]:
-    tokens = split_list((account.options or {}).get("boards", ""))
+    tokens = browser.board_names((account.options or {}).get("boards", ""), "greenhouse.io")
     if not tokens:
         raise ValueError("Add at least one company board name, for example: gitlab")
     for t in tokens:
         if not TOKEN.match(t):
-            raise ValueError(f"'{t}' isn't a board name. Use only the part after boards.greenhouse.io/, for example: gitlab")
+            raise ValueError(f"'{t}' isn't a board name. Use the part after job-boards.greenhouse.io/ (for example: gitlab), or paste a job link")
     return tokens
 
 
@@ -137,5 +137,6 @@ GREENHOUSE = Greenhouse(
     risk_note="Applications go straight to the employer. Job Pot stops and leaves the job for you when the form asks "
               "questions it can't answer or shows a captcha.",
     options=[Option("boards", "Company board names",
-                    "The part after boards.greenhouse.io/ — for example: gitlab, airbnb. Comma separated.")],
+                    "The part after job-boards.greenhouse.io/ in a job link, for example: gitlab, airbnb. Comma separated. "
+                    "You can also paste a job link. (my.greenhouse.io is a separate signed-in search; see the FAQ.)")],
 )

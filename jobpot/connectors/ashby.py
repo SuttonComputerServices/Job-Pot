@@ -3,7 +3,6 @@ import re
 import httpx
 
 from . import browser
-from ..matching import split_list
 from .base import ApplyResult, Connector, JobPosting, Option
 
 NAME = re.compile(r"^[A-Za-z0-9._-]+$")
@@ -13,12 +12,12 @@ DONE = r"thank you for (applying|your application)|application (was |has been )?
 
 
 def boards(account) -> list[str]:
-    names = split_list((account.options or {}).get("boards", ""))
+    names = browser.board_names((account.options or {}).get("boards", ""), "jobs.ashbyhq.com")
     if not names:
         raise ValueError("Add at least one company name, for example: linear")
     for n in names:
         if not NAME.match(n):
-            raise ValueError(f"'{n}' isn't a company name. Use only the part after jobs.ashbyhq.com/, for example: linear")
+            raise ValueError(f"'{n}' isn't a company name. Use the part after jobs.ashbyhq.com/ (for example: linear), or paste a job link")
     return names
 
 
@@ -89,5 +88,5 @@ ASHBY = Ashby(
     key="ashby", label="Ashby", can_apply=True,
     risk_note="Applications go straight to the employer. Job Pot stops and leaves the job for you when the form asks "
               "questions it can't answer or shows a captcha.",
-    options=[Option("boards", "Company names", "The part after jobs.ashbyhq.com/ — for example: linear, ramp. Comma separated.")],
+    options=[Option("boards", "Company names", "The part after jobs.ashbyhq.com/, for example: linear, ramp. Comma separated. You can also paste a job link.")],
 )

@@ -69,6 +69,15 @@ def relevant(postings: list, criteria) -> list:
     return [p for p in postings if any(has_phrase(t, f"{p.title}\n{p.description}".lower()) for t in terms)]
 
 
+def board_names(text: str, host: str) -> list[str]:
+    """Comma-separated company names; a pasted job or board link on `host` is reduced to its name."""
+    out = []
+    for item in split_list(text):
+        m = re.match(rf"^(?:https?://)?(?:[\w-]+\.)?{re.escape(host)}/(?:[^?#]*[?&]for=([^&#]+)|([^/?#]+))", item)
+        out.append((m.group(1) or m.group(2)) if m else item)
+    return out
+
+
 def links(text: str) -> list[str]:
     return re.findall(r"https?://[^\s,]+", text or "")
 

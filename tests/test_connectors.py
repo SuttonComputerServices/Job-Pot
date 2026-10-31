@@ -246,3 +246,12 @@ def test_smartrecruiters_discover(monkeypatch):
     assert calls[0][1] == {"limit": 100, "q": "software engineer"}
     with pytest.raises(ValueError, match="name is wrong"):
         smartrecruiters.SMARTRECRUITERS.discover(NS(options={"companies": "nope"}), None, None)
+
+
+def test_board_names_accept_pasted_links():
+    assert browser.board_names("GitLab, https://job-boards.greenhouse.io/airbnb/jobs/123?gh_src=x, "
+                               "boards.greenhouse.io/embed/job_app?for=discord&token=9", "greenhouse.io") == ["gitlab", "airbnb", "discord"]
+    assert browser.board_names("https://jobs.lever.co/spotify/abc-123/apply", "jobs.lever.co") == ["spotify"]
+    assert browser.board_names("https://jobs.ashbyhq.com/linear", "jobs.ashbyhq.com") == ["linear"]
+    assert browser.board_names("https://jobs.smartrecruiters.com/ServiceNow/7440-x", "smartrecruiters.com") == ["servicenow"]
+    assert browser.board_names("https://evil.example/x", "jobs.lever.co") == ["https://evil.example/x"]  # left for validation to reject

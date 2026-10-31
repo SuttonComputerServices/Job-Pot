@@ -3,7 +3,6 @@ import re
 import httpx
 
 from . import browser
-from ..matching import split_list
 from .base import ApplyResult, Connector, JobPosting, Option
 
 NAME = re.compile(r"^[a-z0-9_-]+$")
@@ -13,12 +12,12 @@ URL_FIELDS = {"linkedin.com": "LinkedIn", "github.com": "GitHub", "twitter.com":
 
 
 def companies(account) -> list[str]:
-    names = split_list((account.options or {}).get("companies", ""))
+    names = browser.board_names((account.options or {}).get("companies", ""), "jobs.lever.co")
     if not names:
         raise ValueError("Add at least one company name, for example: spotify")
     for n in names:
         if not NAME.match(n):
-            raise ValueError(f"'{n}' isn't a company name. Use only the part after jobs.lever.co/, for example: spotify")
+            raise ValueError(f"'{n}' isn't a company name. Use the part after jobs.lever.co/ (for example: spotify), or paste a job link")
     return names
 
 
@@ -116,5 +115,5 @@ LEVER = Lever(
     key="lever", label="Lever", can_apply=True,
     risk_note="Applications go straight to the employer. Job Pot stops and leaves the job for you when the form asks "
               "questions it can't answer or shows a captcha.",
-    options=[Option("companies", "Company names", "The part after jobs.lever.co/ — comma separated.")],
+    options=[Option("companies", "Company names", "The part after jobs.lever.co/, for example: spotify. Comma separated. You can also paste a job link.")],
 )

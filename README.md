@@ -35,6 +35,26 @@ It runs on your own server in Docker, keeps everything in one database there, su
 | **ZipRecruiter**, **Indeed**, **Monster** | No | No | These sites block automated visitors (tested: Cloudflare or captcha pages, even for a real browser). Add their jobs by hand to score them and track replies. |
 | **Any other site** | Add by hand | No | Paste the title, company, link and description. |
 
+### Setting up Greenhouse, Lever, Ashby and SmartRecruiters
+
+**You don't need an account on any of these four.** They aren't job sites you sign in to: they're the hiring systems companies use to run their own careers pages. Each company has a public job board, and anyone can apply on it without signing up (Job Pot's test fills of real Lever and Ashby forms needed no sign-in). So there is no Lever or Ashby account to create, and the sign-in fields on the Job sites page only exist for LinkedIn.
+
+What Job Pot needs is **the list of companies to watch**. For each site, type company names separated by commas, or just **paste a job link** from that company and Job Pot takes the name out of it:
+
+| Site | A job link looks like | Name to use |
+|---|---|---|
+| Greenhouse | `https://job-boards.greenhouse.io/gitlab/jobs/8000000` | `gitlab` |
+| Lever | `https://jobs.lever.co/spotify/1a2b3c...` | `spotify` |
+| Ashby | `https://jobs.ashbyhq.com/linear/d3bc1ced...` | `linear` |
+| SmartRecruiters | `https://jobs.smartrecruiters.com/ServiceNow/7440...` | `ServiceNow` |
+
+Ways to find companies that use them:
+- Open a company's careers page and click a job. If the address (or the address the Apply button goes to) contains one of the hosts above, that's the name. Greenhouse careers pages on a company's own site often have `gh_jid=` in the link; the board name then appears in the address of the application form.
+- Search the web, for example `site:jobs.lever.co "python"` or `site:jobs.ashbyhq.com remote engineer`. Every result's link contains a company name.
+- **MyGreenhouse** (`my.greenhouse.io/jobs/search`) is Greenhouse's own job search for candidates. It needs a free sign-in with a code emailed to you, so Job Pot can't search it for you, but you can use it to *find* companies: open a job there and copy its link into Job Pot's Greenhouse box. The public boards Job Pot reads (`boards-api.greenhouse.io`) still list every company's open jobs without a sign-in.
+
+Save the site, tick **Search this site**, and press **Search now** (or **Search all**) to check the names work. A wrong name gives a clear error on that site's card.
+
 Job Pot never retries a job that might already have been sent: if it presses submit and can't see a confirmation, the job is marked *Needs you* so you can check.
 
 ### How the fit score works
@@ -150,7 +170,7 @@ The database tables are created automatically; there are no migrations yet (see 
 
 1. **Profile**: fill in your name, email, phone, location and links. These go into applications.
 2. **Resume**: upload your resume and fix what the suggestions point out. Scanned PDFs have no text, so paste the text instead.
-3. **Job sites**: set your criteria, then turn on the sites you want. For Greenhouse, Lever, Ashby and SmartRecruiters, list company names (the part after `boards.greenhouse.io/`, `jobs.lever.co/`, `jobs.ashbyhq.com/` or `jobs.smartrecruiters.com/`). For LinkedIn, enter a search location and your sign-in.
+3. **Job sites**: set your criteria, then turn on the sites you want. For Greenhouse, Lever, Ashby and SmartRecruiters, list company names or paste job links (see [Setting up Greenhouse, Lever, Ashby and SmartRecruiters](#setting-up-greenhouse-lever-ashby-and-smartrecruiters); no accounts needed). For LinkedIn, searching needs only a location; your sign-in is used only for applying.
 4. Press **Search now** on a site to see results right away on **Applications**.
 5. **Mailbox**: connect a separate address used only for job hunting. Gmail and Fastmail need an app password.
 6. **Settings → Automation**: turn it on to search, apply and check mail every 15 minutes.
